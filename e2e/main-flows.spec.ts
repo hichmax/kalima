@@ -113,9 +113,41 @@ test("onboarding calculates a useful tajwid starting point", async ({ page }) =>
 test("learning path exposes the complete alphabet and sourced lessons", async ({ page }) => {
   await page.goto("/apprendre");
   await page.getByRole("button", { name: /Alphabet et sons/i }).click();
-  await page.getByRole("button", { name: /Les 28 lettres et le sens de lecture/i }).click();
+  const firstLesson = page.getByRole("button", {
+    name: /Les 28 lettres et le sens de lecture/i,
+  });
+  await firstLesson.click();
+  await expect(firstLesson).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#alphabet-overview")).toHaveClass(/open/);
   await expect(page.locator(".alphabet-grid article")).toHaveCount(28);
+  await expect(page.getByRole("button", { name: "Écouter alif" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Écouter yāʾ" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Quelle forme correspond au nom « bāʾ » ?",
+    }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(async () => {
+      const response = await fetch("/audio/alphabet/01-alif.wav");
+      return response.status;
+    }),
+  ).toBe(200);
   await expect(page.getByText(/Unicode Standard — Arabic script/i)).toBeAttached();
+
+  await page.getByRole("button", { name: "Fermer la leçon" }).click();
+  await expect(firstLesson).toHaveAttribute("aria-expanded", "false");
+
+  await page
+    .getByRole("button", {
+      name: /Une même silhouette, des points différents/i,
+    })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Quelle forme correspond au nom « tāʾ » ?",
+    }),
+  ).toBeVisible();
 });
 
 test("vocabulary defaults to occurrence sorting", async ({ page }) => {

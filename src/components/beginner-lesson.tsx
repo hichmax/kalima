@@ -8,13 +8,11 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { useState } from "react";
+import { AlphabetAudioGrid } from "@/components/alphabet-audio-grid";
 import { QuranAudioPlayer } from "@/components/quran-audio-player";
 import { SourceReference } from "@/components/source-reference";
 import { useApp } from "@/components/providers";
-import {
-  alphabetLetters,
-  type BeginnerLessonData,
-} from "@/data/lessons";
+import { type BeginnerLessonData } from "@/data/lessons";
 
 export function BeginnerLesson({
   lesson,
@@ -29,19 +27,34 @@ export function BeginnerLesson({
 }) {
   const { progress, updateProgress } = useApp();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [answer, setAnswer] = useState<number | null>(null);
   const completed = progress.completedLessons.includes(lesson.id);
   const correct = answer === lesson.quiz.correctIndex;
 
-  if (!open) {
-    return (
+  const openLesson = () => {
+    if (mounted) {
+      setOpen(true);
+      return;
+    }
+
+    setMounted(true);
+    window.requestAnimationFrame(() => setOpen(true));
+  };
+
+  return (
+    <article
+      className={`beginner-lesson-shell card ${open ? "open" : ""} ${
+        completed ? "completed" : ""
+      } ${recommended ? "recommended" : ""}`}
+      id={lesson.id}
+    >
       <button
-        className={`lesson-card card ${completed ? "completed" : ""} ${
-          recommended ? "recommended" : ""
-        }`}
-        id={lesson.id}
+        className="lesson-card"
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={open ? () => setOpen(false) : openLesson}
+        aria-expanded={open}
+        aria-controls={`${lesson.id}-drawer`}
       >
         <span className="lesson-module">
           Leçon {String(lesson.order).padStart(2, "0")}
@@ -60,28 +73,33 @@ export function BeginnerLesson({
           )}
         </span>
       </button>
-    );
-  }
 
-  return (
-    <article className="beginner-lesson-open card" id={lesson.id}>
-      <div className="beginner-lesson-head">
-        <div>
-          <p className="eyebrow">
-            Leçon {lesson.order} · {lesson.duration} minutes
-          </p>
-          <h2 className="section-title">{lesson.title}</h2>
-          <p className="lead">{lesson.summary}</p>
-        </div>
-        <button
-          className="btn btn-ghost btn-icon"
-          type="button"
-          onClick={() => setOpen(false)}
-          aria-label="Fermer la leçon"
-        >
-          <X size={20} />
-        </button>
-      </div>
+      <div
+        className="beginner-lesson-drawer"
+        id={`${lesson.id}-drawer`}
+        aria-hidden={!open}
+        inert={!open ? true : undefined}
+      >
+        <div className="beginner-lesson-drawer-inner">
+          {mounted ? (
+            <div className="beginner-lesson-open">
+              <div className="beginner-lesson-head">
+                <div>
+                  <p className="eyebrow">
+                    Leçon {lesson.order} · {lesson.duration} minutes
+                  </p>
+                  <h2 className="section-title">{lesson.title}</h2>
+                  <p className="lead">{lesson.summary}</p>
+                </div>
+                <button
+                  className="btn btn-ghost btn-icon"
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Fermer la leçon"
+                >
+                  <X size={20} />
+                </button>
+              </div>
 
       <div className="lesson-objectives">
         <div>
@@ -102,17 +120,7 @@ export function BeginnerLesson({
       </div>
 
       {lesson.visual === "alphabet" ? (
-        <div className="alphabet-grid" aria-label="Les 28 lettres arabes">
-          {alphabetLetters.map(([arabic, name, sound]) => (
-            <article key={name}>
-              <span className="quran-text" lang="ar" dir="rtl">
-                {arabic}
-              </span>
-              <strong>{name}</strong>
-              <small>{sound}</small>
-            </article>
-          ))}
-        </div>
+        <AlphabetAudioGrid />
       ) : null}
 
       {lesson.visual === "joining" ? (
@@ -195,7 +203,17 @@ export function BeginnerLesson({
               onClick={() => setAnswer(index)}
               aria-pressed={answer === index}
             >
-              <span>{option}</span>
+              <span
+                className={
+                  /[\u0600-\u06ff]/u.test(option)
+                    ? "quran-text lesson-quiz-arabic"
+                    : undefined
+                }
+                lang={/[\u0600-\u06ff]/u.test(option) ? "ar" : undefined}
+                dir={/[\u0600-\u06ff]/u.test(option) ? "rtl" : undefined}
+              >
+                {option}
+              </span>
               {answer === index ? <Check size={18} weight="bold" /> : null}
             </button>
           ))}
@@ -243,6 +261,10 @@ export function BeginnerLesson({
           {completed ? "Fermer" : "Terminer et continuer"}{" "}
           <ArrowRight size={18} />
         </button>
+      </div>
+            </div>
+          ) : null}
+        </div>
       </div>
     </article>
   );

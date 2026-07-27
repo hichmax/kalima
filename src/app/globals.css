@@ -587,6 +587,27 @@ button:disabled {
   font-size: 0.75rem;
 }
 
+@supports (interpolate-size: allow-keywords) {
+  details {
+    interpolate-size: allow-keywords;
+  }
+
+  details::details-content {
+    overflow: clip;
+    block-size: 0;
+    opacity: 0;
+    transition:
+      block-size 280ms var(--ease),
+      content-visibility 280ms allow-discrete,
+      opacity 180ms ease;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+}
+
 .audio-player {
   display: grid;
   min-height: 64px;
@@ -1604,10 +1625,38 @@ button:disabled {
 
 .reader-settings {
   display: grid;
-  margin-top: 12px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
   gap: 16px;
+}
+
+.reader-settings-drawer {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 300ms var(--ease),
+    opacity 180ms ease;
+}
+
+.reader-settings-drawer.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.reader-settings-drawer-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding-top: 0;
+  transform: translateY(-8px);
+  transition:
+    padding-top 300ms var(--ease),
+    transform 300ms var(--ease);
+}
+
+.reader-settings-drawer.open .reader-settings-drawer-inner {
+  padding-top: 12px;
+  transform: translateY(0);
 }
 
 .reader-settings > div {
@@ -2047,27 +2096,48 @@ button:disabled {
   gap: 9px;
 }
 
+.beginner-lesson-shell {
+  overflow: clip;
+  padding: 0;
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.beginner-lesson-shell.completed {
+  background: var(--sage-50);
+}
+
+.beginner-lesson-shell.recommended {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold-soft) 22%, transparent);
+}
+
 .lesson-card {
   display: grid;
   width: 100%;
   min-height: 92px;
   padding: 14px 18px;
+  border: 0;
+  border-radius: inherit;
   grid-template-columns: 86px minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
   text-align: left;
+  background: transparent;
   transition:
-    transform 180ms var(--ease),
-    border-color 180ms ease;
+    background 180ms ease,
+    color 180ms ease;
 }
 
 .lesson-card:hover:not(:disabled) {
-  border-color: var(--border-strong);
-  transform: translateX(4px);
+  background: color-mix(in srgb, var(--sage-100) 52%, transparent);
 }
 
-.lesson-card.completed {
-  background: var(--sage-50);
+.beginner-lesson-shell.open > .lesson-card {
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: color-mix(in srgb, var(--sage-50) 68%, transparent);
 }
 
 .lesson-module {
@@ -2100,6 +2170,31 @@ button:disabled {
 
 .beginner-lesson-open {
   padding: clamp(24px, 4vw, 46px);
+}
+
+.beginner-lesson-drawer {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 360ms var(--ease),
+    opacity 190ms ease;
+}
+
+.beginner-lesson-drawer-inner {
+  overflow: hidden;
+  min-height: 0;
+  transform: translateY(-12px);
+  transition: transform 340ms var(--ease);
+}
+
+.beginner-lesson-shell.open .beginner-lesson-drawer {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.beginner-lesson-shell.open .beginner-lesson-drawer-inner {
+  transform: translateY(0);
 }
 
 .beginner-lesson-copy {
@@ -2314,11 +2409,6 @@ button:disabled {
   text-align: right;
 }
 
-.lesson-card.recommended {
-  border-color: color-mix(in srgb, var(--gold) 55%, var(--border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold-soft) 22%, transparent);
-}
-
 .beginner-lesson-head,
 .lesson-practice-head,
 .lesson-completion {
@@ -2381,14 +2471,26 @@ button:disabled {
 }
 
 .alphabet-grid article {
+  position: relative;
   display: grid;
-  min-height: 116px;
-  padding: 10px;
+  min-height: 146px;
+  padding: 10px 10px 54px;
   border: 1px solid var(--border);
   border-radius: 14px;
   place-items: center;
   align-content: center;
   background: var(--surface-solid);
+  transition:
+    border-color 180ms ease,
+    transform 180ms var(--ease),
+    box-shadow 180ms ease;
+}
+
+.alphabet-grid article:has(.alphabet-audio-button:hover),
+.alphabet-grid article:has(.alphabet-audio-button:focus-visible) {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
 }
 
 .alphabet-grid .quran-text {
@@ -2404,6 +2506,50 @@ button:disabled {
   color: var(--ink-faint);
   font-size: .58rem;
   text-align: center;
+}
+
+.alphabet-audio-button {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  align-items: center;
+  justify-content: center;
+  color: var(--forest-soft);
+  background: var(--sage-50);
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms var(--ease);
+}
+
+.alphabet-audio-button:hover,
+.alphabet-audio-button.playing {
+  border-color: var(--sage-500);
+  color: var(--surface-solid);
+  background: var(--forest-soft);
+}
+
+.alphabet-audio-button:active {
+  transform: scale(.96);
+}
+
+.alphabet-audio-note {
+  margin: 12px 0 0;
+  color: var(--ink-faint);
+  font-size: .72rem;
+  text-align: center;
+}
+
+.lesson-quiz-arabic {
+  font-size: 1.65rem;
+  line-height: 1;
 }
 
 .joining-visual {

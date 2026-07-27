@@ -153,42 +153,48 @@ export function QuranReader({
           </div>
         </header>
 
-        {showSettings ? (
-          <div className="reader-settings card card-pad">
-            <div>
-              <label htmlFor="arabic-size">Taille du texte arabe</label>
-              <input
-                id="arabic-size"
-                type="range"
-                min="0.82"
-                max="1.35"
-                step="0.05"
-                value={arabicSize}
-                onChange={(event) => setArabicSize(Number(event.target.value))}
-              />
-            </div>
-            <div>
-              <label htmlFor="phonetic-assist">Affichage phonétique</label>
-              <select
-                className="select"
-                id="phonetic-assist"
-                value={progress.phoneticAssist}
-                onChange={(event) =>
-                  updateProgress({
-                    phoneticAssist: event.target.value as
-                      | "complete"
-                      | "progressive"
-                      | "hidden",
-                  })
-                }
-              >
-                <option value="complete">Toujours visible</option>
-                <option value="progressive">Masquer les mots appris</option>
-                <option value="hidden">Masqué</option>
-              </select>
+        <div
+          className={`reader-settings-drawer ${showSettings ? "open" : ""}`}
+          aria-hidden={!showSettings}
+          inert={!showSettings ? true : undefined}
+        >
+          <div className="reader-settings-drawer-inner">
+            <div className="reader-settings card card-pad">
+              <div>
+                <label htmlFor="arabic-size">Taille du texte arabe</label>
+                <input
+                  id="arabic-size"
+                  type="range"
+                  min="0.82"
+                  max="1.35"
+                  step="0.05"
+                  value={arabicSize}
+                  onChange={(event) => setArabicSize(Number(event.target.value))}
+                />
+              </div>
+              <div>
+                <label htmlFor="phonetic-assist">Affichage phonétique</label>
+                <select
+                  className="select"
+                  id="phonetic-assist"
+                  value={progress.phoneticAssist}
+                  onChange={(event) =>
+                    updateProgress({
+                      phoneticAssist: event.target.value as
+                        | "complete"
+                        | "progressive"
+                        | "hidden",
+                    })
+                  }
+                >
+                  <option value="complete">Toujours visible</option>
+                  <option value="progressive">Masquer les mots appris</option>
+                  <option value="hidden">Masqué</option>
+                </select>
+              </div>
             </div>
           </div>
-        ) : null}
+        </div>
 
         <div className="reader-guidance">
           <span>
