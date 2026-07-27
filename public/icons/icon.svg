@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Kalima">
+  <rect width="512" height="512" rx="124" fill="#1E3A34"/>
+  <path d="M112 362V221c0-80 67-121 144-172 77 51 144 92 144 172v141" fill="none" stroke="#FBF8F1" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M88 380c69 6 124 22 168 68 44-46 99-62 168-68-8 46-37 70-83 76-35 4-63 13-85 32-22-19-50-28-85-32-46-6-75-30-83-76Z" fill="#FBF8F1"/>
+  <path d="M188 172h56v152h-56V172Zm50 86 84-86h65l-94 95 98 92h-70l-83-82v-19Z" fill="#FBF8F1"/>
+  <path d="m256 96 25 25-25 25-25-25 25-25Z" fill="#C79A3B"/>
+</svg>

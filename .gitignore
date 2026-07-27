@@ -1,0 +1,16 @@
+node_modules
+.next
+coverage
+playwright-report
+test-results
+.env*
+!.env.example
+.vercel
+*.log
+.DS_Store
+data/*.db*
+*.tsbuildinfo
+eslint.config 2.mjs
+**/* 2.ts
+**/* 2.tsx
+design-system/nour/

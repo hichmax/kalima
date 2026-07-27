@@ -1,0 +1,60 @@
+import type { SourceRef } from "@/lib/types";
+
+export const contentSources: SourceRef[] = [
+  {
+    id: "tanzil-1.1",
+    label: "Tanzil Quran Text",
+    url: "https://tanzil.net/docs/download",
+    version: "1.1",
+    license: "CC BY 3.0 — copies verbatim only",
+    accessedAt: "2026-07-27",
+  },
+  {
+    id: "qac-0.4-mirror",
+    label: "Quranic Arabic Corpus — mot à mot et morphologie",
+    url: "https://corpus.quran.com/wordbyword.jsp",
+    version: "Corpus morphologique 0.4 + miroir local identifié",
+    license: "GNU GPL — licence et attribution publiées par le corpus",
+    accessedAt: "2026-07-27",
+  },
+  {
+    id: "quran-foundation-v4",
+    label: "Quran Foundation Content API",
+    url: "https://api-docs.quran.foundation/docs/sdk/javascript/verses/",
+    version: "Content API v4",
+    license: "Developer Terms apply",
+    accessedAt: "2026-07-27",
+  },
+  {
+    id: "unicode-arabic-17",
+    label: "Unicode Standard — Arabic script",
+    url: "https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-9/",
+    version: "Unicode Standard 17.0 · chapitre 9",
+    license: "Spécification technique Unicode officielle",
+    accessedAt: "2026-07-27",
+  },
+  {
+    id: "quran-complex-tajweed-muyassar",
+    label: "Complexe du Roi Fahd — Al-Tajwīd al-Muyassar",
+    url: "https://qurancomplex.gov.sa/en/techquran/dev/",
+    version: "Édition numérique officielle · 2023",
+    license: "Publication officielle du Complexe du Roi Fahd",
+    accessedAt: "2026-07-27",
+  },
+  {
+    id: "quran-complex-hafs",
+    label: "Complexe du Roi Fahd — Muṣḥaf et récitation Ḥafṣ",
+    url: "https://fonts.qurancomplex.gov.sa/en/ten-readings/",
+    version: "Riwāya Ḥafṣ ʿan ʿĀṣim",
+    license: "Ressource officielle du Complexe du Roi Fahd",
+    accessedAt: "2026-07-27",
+  },
+  {
+    id: "kalima-pedagogy-draft",
+    label: "Couche pédagogique Kalima",
+    url: "/docs/CONTENT_REVIEW.md",
+    version: "0.1.0",
+    license: "Contenu interne — validation requise",
+    accessedAt: "2026-07-27",
+  },
+];
