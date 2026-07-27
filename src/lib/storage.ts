@@ -14,6 +14,7 @@ export const defaultProgress: LearnerProgress = {
   completedLessons: [],
   learnedSurahIds: [],
   reviewCount: 0,
+  reviewMasteredWordIds: [],
   phoneticAssist: "complete",
   dailyMinutes: 10,
   learningProfile: {

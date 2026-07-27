@@ -6,7 +6,7 @@ import { PwaRegister } from "@/components/pwa-register";
 
 export const metadata: Metadata = {
   title: {
-    default: `${appConfig.name} — 5 mots d’arabe coranique par jour`,
+    default: `${appConfig.name} — apprendre l’arabe du Coran mot après mot`,
     template: `%s · ${appConfig.name}`,
   },
   description: appConfig.description,

@@ -3,7 +3,7 @@ import { appConfig } from "@/config/app";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${appConfig.name} — 5 mots par jour`,
+    name: `${appConfig.name} — l’arabe du Coran mot après mot`,
     short_name: appConfig.name,
     description: appConfig.description,
     start_url: "/dashboard",

@@ -18,9 +18,9 @@ export default function ReviewPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Révision jusqu’à maîtrise"
+        eyebrow="Révision aléatoire"
         title="Choisis ta séance, puis avance jusqu’à « Facile »."
-        description="Les mots arrivent dans l’ordre du vocabulaire, du plus fréquent au moins fréquent. Arrête-toi quand tu veux : un résumé sera toujours disponible."
+        description="Chaque nouvelle séance tire des mots dans toute la base de vocabulaire. Arrête-toi quand tu veux : un résumé sera toujours disponible."
       />
       <FlashcardSession units={units} />
     </>

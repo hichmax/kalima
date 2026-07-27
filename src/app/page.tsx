@@ -11,7 +11,6 @@ import { AyahCard } from "@/components/ayah-card";
 import { PublicFooter } from "@/components/public-footer";
 import { PublicHeader } from "@/components/public-header";
 import { featuredAyah } from "@/data/quran-fixtures";
-import { appConfig } from "@/config/app";
 
 export default function LandingPage() {
   return (
@@ -21,13 +20,13 @@ export default function LandingPage() {
         <section className="hero">
           <div className="container hero-grid">
             <div className="hero-copy">
-              <p className="eyebrow">Ton défi quotidien · 5 mots</p>
+              <p className="eyebrow">Lire · prononcer · mémoriser</p>
               <h1 className="display">
-                Apprends le Coran, ses mots et l’arabe — cinq mots par jour.
+                Kalima, apprends l’arabe du Coran mot après mot.
               </h1>
               <p className="lead">
-                {appConfig.name} transforme chaque verset en un apprentissage
-                simple : découvre 5 mots, retrouve-les dans le Coran et avance
+                Un rituel simple de 5 mots par jour : découvre leur sens,
+                écoute leur prononciation, retrouve-les dans le Coran et avance
                 sans jargon ni pression.
               </p>
               <div className="hero-actions">

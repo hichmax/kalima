@@ -90,6 +90,7 @@ export interface LearnerProgress {
   completedLessons: string[];
   learnedSurahIds: number[];
   reviewCount: number;
+  reviewMasteredWordIds: string[];
   phoneticAssist: "complete" | "progressive" | "hidden";
   dailyMinutes: 5 | 10 | 15 | 20 | 30;
   learningProfile: {

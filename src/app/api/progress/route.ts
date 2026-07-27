@@ -14,6 +14,7 @@ const progressSchema = z.object({
   completedLessons: z.array(z.string().max(80)).max(500),
   learnedSurahIds: z.array(z.number().int().min(1).max(114)).max(114),
   reviewCount: z.number().int().min(0).max(100_000),
+  reviewMasteredWordIds: z.array(z.string().max(80)).max(5000),
   phoneticAssist: z.enum(["complete", "progressive", "hidden"]),
   dailyMinutes: z.union([
     z.literal(5),

@@ -13,7 +13,10 @@ import { QuranAudioPlayer } from "@/components/quran-audio-player";
 import { SourceReference } from "@/components/source-reference";
 import { useApp } from "@/components/providers";
 import { getWordPhonetic } from "@/lib/phonetics";
-import type { ReviewChoice } from "@/lib/review";
+import {
+  selectRandomReviewUnits,
+  type ReviewChoice,
+} from "@/lib/review";
 import type { VocabularyUnit } from "@/lib/types";
 
 const controls: { choice: ReviewChoice; label: string; hint: string }[] = [
@@ -39,19 +42,31 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
   >({});
   const [revealed, setRevealed] = useState(false);
   const [stoppedEarly, setStoppedEarly] = useState(false);
-  const { updateProgress } = useApp();
+  const { progress, updateProgress } = useApp();
 
   const unitById = useMemo(
     () => new Map(units.map((unit) => [unit.id, unit])),
     [units],
   );
   const currentUnit = unitById.get(queueIds[0]);
+  const masteredWordIds = useMemo(
+    () => new Set(progress.reviewMasteredWordIds),
+    [progress.reviewMasteredWordIds],
+  );
+  const availableUnits = useMemo(
+    () => units.filter((unit) => !masteredWordIds.has(unit.id)),
+    [masteredWordIds, units],
+  );
   const sessionUnits = sessionUnitIds
     .map((id) => unitById.get(id))
     .filter((unit): unit is VocabularyUnit => Boolean(unit));
 
   const startSession = () => {
-    const selected = units.slice(0, Math.min(selectedCount, units.length));
+    const selected = selectRandomReviewUnits(
+      units,
+      selectedCount,
+      progress.reviewMasteredWordIds,
+    );
     const ids = selected.map((unit) => unit.id);
     setSessionUnitIds(ids);
     setQueueIds(ids);
@@ -84,7 +99,19 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
     setMasteredIds(nextMastered);
     setQueueIds(nextQueue);
     setRevealed(false);
-    updateProgress({ reviewCount: nextQueue.length });
+    updateProgress(
+      choice === "easy"
+        ? {
+            reviewCount: nextQueue.length,
+            reviewMasteredWordIds: Array.from(
+              new Set([...progress.reviewMasteredWordIds, currentId]),
+            ),
+            learnedWordIds: Array.from(
+              new Set([...progress.learnedWordIds, currentId]),
+            ),
+          }
+        : { reviewCount: nextQueue.length },
+    );
 
     if (!nextQueue.length) {
       setStoppedEarly(false);
@@ -106,8 +133,10 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
           <p className="eyebrow">Préparer la séance</p>
           <h2>Combien de mots veux-tu réviser ?</h2>
           <p className="muted">
-            La séance prend toujours les premiers mots du vocabulaire, classés
-            du plus fréquent au moins fréquent dans le Coran.
+            Chaque séance tire au hasard dans les {availableUnits.length} mots
+            encore disponibles de toute la base. Un mot classé{" "}
+            <strong>Facile</strong> ne sera plus proposé dans les prochaines
+            séances.
           </p>
         </div>
         <div className="review-count-options" aria-label="Nombre de mots">
@@ -118,7 +147,7 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
               key={count}
               onClick={() => setSelectedCount(count)}
               aria-pressed={selectedCount === count}
-              disabled={count > units.length}
+              disabled={count > availableUnits.length}
             >
               <strong>{count}</strong>
               <small>mots</small>
@@ -137,8 +166,11 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
           className="btn btn-primary"
           type="button"
           onClick={startSession}
+          disabled={availableUnits.length === 0}
         >
-          Commencer avec {Math.min(selectedCount, units.length)} mots{" "}
+          {availableUnits.length
+            ? `Commencer avec ${Math.min(selectedCount, availableUnits.length)} mots`
+            : "Tous les mots sont classés Facile"}{" "}
           <Play size={18} weight="fill" />
         </button>
       </section>
@@ -255,7 +287,10 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
         </button>
       </div>
 
-      <article className={`flashcard card ${revealed ? "revealed" : ""}`}>
+      <article
+        className={`flashcard card ${revealed ? "revealed" : ""}`}
+        data-review-unit-id={currentUnit.id}
+      >
         <div className="flashcard-top">
           <span className="chip">
             {currentUnit.occurrences} occurrences

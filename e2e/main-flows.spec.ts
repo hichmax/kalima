@@ -3,7 +3,12 @@ import { expect, test } from "@playwright/test";
 test("landing connects to onboarding and learning space", async ({ page }) => {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
-  await expect(page.getByRole("heading", { name: /Cinq mots par jour/i })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: /Kalima, apprends l’arabe du Coran mot après mot/i,
+    }),
+  ).toBeVisible();
+  await expect(page.getByText(/Un rituel simple de 5 mots par jour/i)).toBeVisible();
   await page.getByRole("link", { name: /Apprendre mes 5 premiers mots/i }).click();
   await expect(page).toHaveURL(/\/onboarding$/);
   await expect(page.getByRole("heading", { name: /Reconnais-tu déjà/i })).toBeVisible();
@@ -62,15 +67,39 @@ test("review keeps difficult words until every word is easy", async ({ page }) =
   await page.getByRole("button", { name: /^5 mots$/i }).click();
   await page.getByRole("button", { name: /Commencer avec 5 mots/i }).click();
 
+  const reviewedIds: string[] = [];
+  reviewedIds.push(
+    (await page.locator(".flashcard").getAttribute("data-review-unit-id")) || "",
+  );
   await page.getByRole("button", { name: /Révéler la réponse/i }).click();
   await page.getByRole("button", { name: /Correct/i }).click();
   for (let index = 0; index < 5; index += 1) {
+    reviewedIds.push(
+      (await page.locator(".flashcard").getAttribute("data-review-unit-id")) || "",
+    );
     await page.getByRole("button", { name: /Révéler la réponse/i }).click();
     await page.getByRole("button", { name: /Facile/i }).click();
   }
   await expect(
     page.getByRole("heading", { name: /5 mots faciles sur 5/i }),
   ).toBeVisible();
+
+  const masteredIds = await page.evaluate(() => {
+    const progress = JSON.parse(
+      window.localStorage.getItem("kalima:progress:v2") || "{}",
+    ) as { reviewMasteredWordIds?: string[] };
+    return progress.reviewMasteredWordIds || [];
+  });
+  expect([...new Set(masteredIds)].sort()).toEqual(
+    [...new Set(reviewedIds.filter(Boolean))].sort(),
+  );
+
+  await page.getByRole("button", { name: /Choisir une nouvelle séance/i }).click();
+  await page.getByRole("button", { name: /Commencer avec 5 mots/i }).click();
+  await expect(page.locator(".flashcard")).not.toHaveAttribute(
+    "data-review-unit-id",
+    new RegExp(`^(${masteredIds.join("|")})$`),
+  );
 });
 
 test("review can stop at any time and show a summary", async ({ page }) => {
