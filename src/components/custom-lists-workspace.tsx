@@ -15,7 +15,8 @@ import {
   Trash,
   X,
 } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { CatalogPagination } from "@/components/catalog-pagination";
 import { FlashcardSession } from "@/components/flashcard-session";
 import { useApp } from "@/components/providers";
 import type { Surah } from "@/lib/types";
@@ -31,23 +32,18 @@ import type {
   CustomWordList,
   CustomWordListOrigin,
   PracticeWord,
+  VocabularyPageResult,
   VocabularyUnit,
 } from "@/lib/types";
 
 type BuilderSource = "manual" | "saved" | "quran";
-
-const normalizeSearch = (value: string) =>
-  value
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f\u064B-\u065F\u0670\u06D6-\u06ED]/gu, "")
-    .replace(/[ٱأإآ]/gu, "ا")
-    .toLocaleLowerCase("fr");
+const maxCustomListWords = 5000;
 
 export function CustomListsWorkspace({
-  units,
+  initialVocabularyPage,
   chapters,
 }: {
-  units: VocabularyUnit[];
+  initialVocabularyPage: VocabularyPageResult;
   chapters: Surah[];
 }) {
   const { progress, updateProgress } = useApp();
@@ -65,6 +61,14 @@ export function CustomListsWorkspace({
   const [builderSource, setBuilderSource] =
     useState<BuilderSource>("manual");
   const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
+  const [vocabularyPage, setVocabularyPage] = useState(initialVocabularyPage);
+  const [vocabularyPageNumber, setVocabularyPageNumber] = useState(
+    initialVocabularyPage.page,
+  );
+  const [vocabularyLoading, setVocabularyLoading] = useState(false);
+  const [vocabularyError, setVocabularyError] = useState<string | null>(null);
+  const [favoriteUnits, setFavoriteUnits] = useState<VocabularyUnit[]>([]);
   const [chapterId, setChapterId] = useState(1);
   const [ayahs, setAyahs] = useState<Ayah[]>([]);
   const [selectedAyahIds, setSelectedAyahIds] = useState<string[]>([]);
@@ -77,45 +81,76 @@ export function CustomListsWorkspace({
     lists.find((list) => list.id === trainingListId) || null;
   const selectedChapter =
     chapters.find((chapter) => chapter.id === chapterId) || chapters[0];
-  const unitById = useMemo(
-    () => new Map(units.map((unit) => [unit.id, unit])),
-    [units],
-  );
-  const favoriteUnits = useMemo(
-    () =>
-      progress.favoriteVocabularyWordIds
-        .map((id) => unitById.get(id))
-        .filter((unit): unit is VocabularyUnit => Boolean(unit)),
-    [progress.favoriteVocabularyWordIds, unitById],
-  );
   const savedWords = useMemo(
-    () =>
-      mergePracticeWords(
-        progress.savedPracticeWords,
-        progress.learnedWordIds
-          .map((id) => unitById.get(id))
-          .filter((unit): unit is VocabularyUnit => Boolean(unit))
-          .map(toPracticeWord),
-      ),
-    [progress.learnedWordIds, progress.savedPracticeWords, unitById],
+    () => mergePracticeWords(progress.savedPracticeWords),
+    [progress.savedPracticeWords],
   );
-  const manualResults = useMemo(() => {
-    const search = normalizeSearch(query.trim());
-    const pool = search ? units : units.slice(0, 24);
-    return pool
-      .filter((unit) =>
-        search
-          ? normalizeSearch(
-              `${unit.arabic} ${unit.simpleArabic} ${getWordPhonetic(unit)} ${unit.primaryMeaningFr} ${unit.lemma}`,
-            ).includes(search)
-          : true,
-      )
-      .slice(0, 30);
-  }, [query, units]);
   const draftIds = useMemo(
     () => new Set(draftWords.map((word) => word.id)),
     [draftWords],
   );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadVocabulary = async () => {
+      setVocabularyLoading(true);
+      setVocabularyError(null);
+      try {
+        const params = new URLSearchParams({
+          query: deferredQuery,
+          page: String(vocabularyPageNumber),
+          pageSize: String(initialVocabularyPage.pageSize),
+        });
+        const response = await fetch(`/api/vocabulary?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const body = (await response.json()) as VocabularyPageResult & {
+          error?: string;
+        };
+        if (!response.ok) {
+          throw new Error(body.error || "Impossible de charger le vocabulaire.");
+        }
+        setVocabularyPage(body);
+      } catch (requestError) {
+        if (requestError instanceof DOMException && requestError.name === "AbortError") {
+          return;
+        }
+        setVocabularyError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Impossible de charger le vocabulaire.",
+        );
+      } finally {
+        if (!controller.signal.aborted) setVocabularyLoading(false);
+      }
+    };
+    void loadVocabulary();
+    return () => controller.abort();
+  }, [deferredQuery, initialVocabularyPage.pageSize, vocabularyPageNumber]);
+
+  useEffect(() => {
+    if (!progress.favoriteVocabularyWordIds.length) {
+      return;
+    }
+    const controller = new AbortController();
+    const loadFavorites = async () => {
+      const response = await fetch("/api/vocabulary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: progress.favoriteVocabularyWordIds }),
+        signal: controller.signal,
+      });
+      if (!response.ok) return;
+      const body = (await response.json()) as { items: VocabularyUnit[] };
+      setFavoriteUnits(body.items);
+    };
+    void loadFavorites();
+    return () => controller.abort();
+  }, [progress.favoriteVocabularyWordIds]);
+
+  const availableFavoriteUnits = progress.favoriteVocabularyWordIds.length
+    ? favoriteUnits
+    : [];
 
   const resetBuilder = () => {
     setEditingListId(null);
@@ -126,6 +161,7 @@ export function CustomListsWorkspace({
     setSourceLabels([]);
     setBuilderSource("manual");
     setQuery("");
+    setVocabularyPageNumber(1);
     setAyahs([]);
     setSelectedAyahIds([]);
     setMessage(null);
@@ -160,7 +196,7 @@ export function CustomListsWorkspace({
       return;
     }
     setDraftWords((current) =>
-      mergePracticeWords(current, words).slice(0, 3000),
+      mergePracticeWords(current, words).slice(0, maxCustomListWords),
     );
     setSourceLabels((current) =>
       Array.from(new Set([...current, sourceLabel])).slice(0, 20),
@@ -171,14 +207,14 @@ export function CustomListsWorkspace({
     setMessage(`${words.length} carte${words.length === 1 ? "" : "s"} ajoutée${words.length === 1 ? "" : "s"}.`);
   };
 
-  const toggleManualWord = (unit: VocabularyUnit) => {
-    if (draftIds.has(unit.id)) {
+  const toggleManualWord = (word: PracticeWord) => {
+    if (draftIds.has(word.id)) {
       setDraftWords((current) =>
-        current.filter((word) => word.id !== unit.id),
+        current.filter((item) => item.id !== word.id),
       );
       return;
     }
-    addWords([toPracticeWord(unit)], "Sélection manuelle", "manual");
+    addWords([word], "Sélection manuelle", "manual");
   };
 
   const loadChapter = async () => {
@@ -216,10 +252,6 @@ export function CustomListsWorkspace({
       if (current.includes(ayahId)) {
         return current.filter((id) => id !== ayahId);
       }
-      if (current.length >= 10) {
-        setMessage("Tu peux sélectionner jusqu’à 10 versets par ajout.");
-        return current;
-      }
       return [...current, ayahId];
     });
   };
@@ -251,13 +283,19 @@ export function CustomListsWorkspace({
     const favoriteIds = new Set(progress.favoriteAyahIds);
     const selected = ayahs
       .filter((ayah) => favoriteIds.has(ayah.id))
-      .slice(0, 10)
       .map((ayah) => ayah.id);
     setSelectedAyahIds(selected);
     setMessage(
       selected.length
         ? `${selected.length} verset${selected.length === 1 ? " favori sélectionné" : "s favoris sélectionnés"}.`
         : "Aucun verset favori dans cette sourate.",
+    );
+  };
+
+  const toggleAllAyahs = () => {
+    setMessage(null);
+    setSelectedAyahIds((current) =>
+      current.length === ayahs.length ? [] : ayahs.map((ayah) => ayah.id),
     );
   };
 
@@ -473,21 +511,36 @@ export function CustomListsWorkspace({
                   <input
                     id="list-word-search"
                     value={query}
-                    onChange={(event) => setQuery(event.target.value)}
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                      setVocabularyPageNumber(1);
+                    }}
                     placeholder="Chercher en français, arabe ou phonétique…"
                   />
                 </label>
                 <p className="muted custom-list-helper">
-                  Recherche dans les {units.length} unités du vocabulaire puis ajoute celles que tu veux travailler.
+                  Recherche dans les {initialVocabularyPage.total.toLocaleString("fr-FR")} unités couvrant tout le corpus, puis ajoute celles que tu veux travailler.
                 </p>
                 <WordPicker
-                  words={manualResults}
+                  words={vocabularyPage.items}
                   selectedIds={draftIds}
-                  onToggle={(word) => {
-                    const unit = unitById.get(word.id);
-                    if (unit) toggleManualWord(unit);
-                  }}
+                  onToggle={toggleManualWord}
                   emptyLabel="Essaie un autre mot ou une autre orthographe."
+                />
+                {vocabularyError ? (
+                  <p className="form-error" role="alert">{vocabularyError}</p>
+                ) : null}
+                <div className="custom-list-catalog-count">
+                  <span>
+                    {vocabularyPage.total.toLocaleString("fr-FR")} résultat{vocabularyPage.total === 1 ? "" : "s"}
+                  </span>
+                  <span>Page {vocabularyPage.page}/{vocabularyPage.totalPages}</span>
+                </div>
+                <CatalogPagination
+                  page={vocabularyPage.page}
+                  totalPages={vocabularyPage.totalPages}
+                  onChange={setVocabularyPageNumber}
+                  disabled={vocabularyLoading}
                 />
               </section>
             ) : null}
@@ -499,16 +552,16 @@ export function CustomListsWorkspace({
                     type="button"
                     onClick={() =>
                       addWords(
-                        favoriteUnits.map(toPracticeWord),
+                        availableFavoriteUnits.map(toPracticeWord),
                         "Mots favoris",
                         "favorites",
                       )
                     }
-                    disabled={!favoriteUnits.length}
+                    disabled={!availableFavoriteUnits.length}
                   >
                     <Star size={24} weight="fill" />
                     <strong>Ajouter mes favoris</strong>
-                    <small>{favoriteUnits.length} mots disponibles</small>
+                    <small>{availableFavoriteUnits.length} mots disponibles</small>
                   </button>
                   <button
                     type="button"
@@ -526,7 +579,7 @@ export function CustomListsWorkspace({
                     <small>{savedWords.length} mots disponibles</small>
                   </button>
                 </div>
-                {!favoriteUnits.length && !savedWords.length ? (
+                {!availableFavoriteUnits.length && !savedWords.length ? (
                   <div className="custom-list-empty-state soft-card">
                     <Star size={25} />
                     <div>
@@ -539,7 +592,7 @@ export function CustomListsWorkspace({
                 ) : (
                   <WordPicker
                     words={mergePracticeWords(
-                      favoriteUnits.map(toPracticeWord),
+                      availableFavoriteUnits.map(toPracticeWord),
                       savedWords,
                     )}
                     selectedIds={draftIds}
@@ -602,15 +655,25 @@ export function CustomListsWorkspace({
                       <button
                         className="btn btn-secondary"
                         type="button"
+                        onClick={toggleAllAyahs}
+                      >
+                        <CheckCircle size={18} />
+                        {selectedAyahIds.length === ayahs.length
+                          ? "Tout désélectionner"
+                          : "Sélectionner toute la sourate"}
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        type="button"
                         onClick={selectFavoriteAyahs}
                       >
                         <Star size={18} /> Mes versets favoris
                       </button>
                       <span className="chip">
-                        {selectedAyahIds.length}/10 versets sélectionnés
+                        {selectedAyahIds.length} verset{selectedAyahIds.length === 1 ? "" : "s"} sélectionné{selectedAyahIds.length === 1 ? "" : "s"}
                       </span>
                     </div>
-                    <div className="custom-list-ayah-grid" aria-label="Choisir jusqu’à 10 versets">
+                    <div className="custom-list-ayah-grid" aria-label="Choisir les versets à ajouter">
                       {ayahs.map((ayah) => {
                         const selected = selectedAyahIds.includes(ayah.id);
                         return (
@@ -646,7 +709,7 @@ export function CustomListsWorkspace({
                     <div>
                       <strong>Charge une sourate pour commencer</strong>
                       <p className="muted">
-                        Tu pourras ajouter tous ses mots uniques ou choisir jusqu’à 10 versets précis.
+                        Tu pourras ajouter tous ses mots uniques ou sélectionner autant de versets précis que tu veux.
                       </p>
                     </div>
                   </div>
@@ -725,7 +788,7 @@ export function CustomListsWorkspace({
             <p className="eyebrow">Ton espace personnel</p>
             <h2>Crée une liste qui correspond à ce que tu lis.</h2>
             <p className="muted">
-              Pars de tes favoris, d’une sourate entière, de 10 versets choisis ou d’une recherche dans les 1 000 mots.
+              Pars de tes favoris, d’une sourate entière, d’autant de versets que tu veux ou d’une recherche dans les {initialVocabularyPage.total.toLocaleString("fr-FR")} mots du corpus.
             </p>
             <button className="btn btn-primary" type="button" onClick={openNewList}>
               Créer ma première liste <FolderPlus size={19} />

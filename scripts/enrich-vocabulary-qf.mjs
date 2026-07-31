@@ -42,46 +42,68 @@ const query = new URLSearchParams({
     "text_uthmani,text_imlaei,translation,transliteration,audio_url",
 });
 
-const verseKeys = [
-  ...new Set(
-    vocabulary.units
-      .map((unit) => unit.examples[0]?.split(":").slice(0, 2).join(":"))
-      .filter(Boolean),
-  ),
-];
-
 const verseByKey = new Map();
-let cursor = 0;
-const workers = Array.from({ length: 8 }, async () => {
-  while (cursor < verseKeys.length) {
-    const index = cursor;
-    cursor += 1;
-    const verseKey = verseKeys[index];
-    const response = await fetch(
-      `${apiBase}/content/api/v4/verses/by_key/${verseKey}?${query.toString()}`,
-      {
-        headers: {
-          "x-auth-token": accessToken,
-          "x-client-id": clientId,
-        },
+let chapterCursor = 1;
+
+const fetchPage = async (chapter, page) => {
+  const pageQuery = new URLSearchParams(query);
+  pageQuery.set("page", String(page));
+  pageQuery.set("per_page", "50");
+  const response = await fetch(
+    `${apiBase}/content/api/v4/verses/by_chapter/${chapter}?${pageQuery.toString()}`,
+    {
+      headers: {
+        "x-auth-token": accessToken,
+        "x-client-id": clientId,
       },
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`Chapter ${chapter}, page ${page} failed (${response.status})`);
+  }
+  return response.json();
+};
+
+const workers = Array.from({ length: 6 }, async () => {
+  while (chapterCursor <= 114) {
+    const chapter = chapterCursor;
+    chapterCursor += 1;
+    const firstPage = await fetchPage(chapter, 1);
+    const remainingPages = await Promise.all(
+      Array.from(
+        { length: Math.max(0, firstPage.pagination.total_pages - 1) },
+        (_, index) => fetchPage(chapter, index + 2),
+      ),
     );
-    if (!response.ok) {
-      throw new Error(`Verse ${verseKey} failed (${response.status})`);
+    for (const verse of [firstPage, ...remainingPages].flatMap(
+      (page) => page.verses,
+    )) {
+      verseByKey.set(verse.verse_key, verse);
     }
-    const body = await response.json();
-    verseByKey.set(verseKey, body.verse);
-    if ((index + 1) % 50 === 0 || index + 1 === verseKeys.length) {
-      console.log(`Fetched ${index + 1}/${verseKeys.length} source verses`);
-    }
+    console.log(`Fetched chapter ${chapter}/114`);
   }
 });
 await Promise.all(workers);
 
-const plainText = (value = "") =>
+const decodeEntities = (value = "") =>
   value
-    .replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/giu, "")
-    .replace(/<[^>]+>/gu, " ")
+    .replace(/&#(\d+);/gu, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/giu, (_, code) =>
+      String.fromCodePoint(Number.parseInt(code, 16)),
+    )
+    .replaceAll("&nbsp;", " ")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">");
+
+const plainText = (value = "") =>
+  decodeEntities(
+    value
+      .replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/giu, "")
+      .replace(/<[^>]+>/gu, " "),
+  )
     .replace(/\)(?=\p{L})/gu, ") ")
     .replace(/\s+/gu, " ")
     .replace(/[،,;]\s*$/u, "")

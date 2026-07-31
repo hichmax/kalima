@@ -21,11 +21,14 @@ export default async function ValidationPage() {
   if (!authorized) return <AdminLogin />;
   syncVocabularyReviewQueue(vocabulary.units as VocabularyUnit[]);
   const items = getVocabularyReviewQueue();
+  const vocabularyCount = new Intl.NumberFormat("fr-FR").format(
+    vocabulary.units.length,
+  );
   return (
     <>
       <PageHeader
         eyebrow="Interne · accès protégé"
-        title="Vérifier les 1 000 mots"
+        title={`Vérifier les ${vocabularyCount} mots`}
         description="Contrôler la traduction française, la phonétique, l’audio et la source de chaque occurrence. Les décisions restent dans SQLite sur cet appareil."
       />
       <ValidationPanel initialItems={items} />

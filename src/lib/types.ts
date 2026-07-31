@@ -104,6 +104,22 @@ export interface VocabularyUnit extends PracticeWord {
   status: ReviewStatus;
 }
 
+export type VocabularyFilter = "all" | PartOfSpeech;
+
+export type VocabularySort =
+  | "occurrences-desc"
+  | "occurrences-asc"
+  | "french"
+  | "arabic";
+
+export interface VocabularyPageResult {
+  items: VocabularyUnit[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface LearnerProgress {
   lastRoute: string;
   lastAyah: string;

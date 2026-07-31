@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/page-header";
 import { VocabularyLibrary } from "@/components/vocabulary-library";
-import { getVocabularyUnits } from "@/lib/vocabulary";
+import { getVocabularyPage } from "@/lib/vocabulary";
 
 export const dynamic = "force-dynamic";
 
@@ -10,14 +10,16 @@ export const metadata: Metadata = {
 };
 
 export default function VocabularyPage() {
+  const initialPage = getVocabularyPage();
+  const totalLabel = new Intl.NumberFormat("fr-FR").format(initialPage.total);
   return (
     <>
       <PageHeader
-        eyebrow="1 000 unités issues du corpus"
+        eyebrow={`${totalLabel} unités couvrant tout le corpus`}
         title="Retrouver un mot et sa famille"
-        description="Recherche en français, en arabe, sans signes de voyelles ou par lettres de famille."
+        description="Parcours tous les mots du Coran par pages, ou recherche en français, en arabe, sans voyelles et par lettres de famille."
       />
-      <VocabularyLibrary units={getVocabularyUnits()} />
+      <VocabularyLibrary initialPage={initialPage} />
     </>
   );
 }

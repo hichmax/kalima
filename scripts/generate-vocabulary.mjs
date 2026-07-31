@@ -52,9 +52,11 @@ for (const line of raw.split(/\r?\n/u)) {
     arabic,
     root,
     coarsePos,
+    isAdjective: false,
     count: 0,
     examples: [],
   };
+  existing.isAdjective ||= tags.includes("ADJ");
   existing.count += 1;
   if (existing.examples.length < 3) {
     existing.examples.push(location.split(":").slice(0, 3).join(":"));
@@ -78,7 +80,6 @@ const pos = (coarsePos, tags) => {
 
 const units = [...byLemma.values()]
   .sort((a, b) => b.count - a.count || a.lemma.localeCompare(b.lemma, "ar"))
-  .slice(0, 1000)
   .map((item, index) => {
     const knownMeaning = curatedMeanings.get(item.lemma);
     return {
@@ -89,14 +90,19 @@ const units = [...byLemma.values()]
       transliteration: "À valider",
       primaryMeaningFr: knownMeaning || "Sens français à valider",
       contextualMeanings: knownMeaning ? [knownMeaning] : [],
-      partOfSpeech: pos(item.coarsePos, ""),
+      partOfSpeech: pos(item.coarsePos, item.isAdjective ? "ADJ" : ""),
       lemma: item.lemma,
       root: item.root,
       frequency: item.count,
       occurrences: item.count,
       examples: item.examples,
       level: index < 500 ? 1 : index < 1000 ? 2 : 3,
-      themes: index < 500 ? ["Essentiel 500"] : ["Essentiel 1 000"],
+      themes:
+        index < 500
+          ? ["Essentiel 500"]
+          : index < 1000
+            ? ["Essentiel 1 000"]
+            : ["Corpus complet"],
       family: item.root,
       sourceIds: ["qac-0.4-mirror"],
       status: knownMeaning ? "needs_review" : "imported",
@@ -114,7 +120,7 @@ await writeFile(
         sourceCommit: "8f38b39016824284f9ed16ae15069ff9102c4acf",
         sourceSha256: checksum,
         count: units.length,
-        note: "Les unités sont réelles et classées par fréquence de lemme. Les sens français restent à valider lorsqu’ils ne sont pas explicitement renseignés.",
+        note: "Toutes les unités lexicales du corpus sont incluses et classées par fréquence de lemme. Les sens français restent à valider lorsqu’ils ne sont pas explicitement renseignés.",
       },
       units,
     },

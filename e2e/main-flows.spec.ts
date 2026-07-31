@@ -183,6 +183,8 @@ test("learning path exposes the complete alphabet and sourced lessons", async ({
 test("vocabulary defaults to occurrence sorting", async ({ page }) => {
   await page.goto("/vocabulaire");
   await expect(page.getByLabel("Trier par")).toHaveValue("occurrences-desc");
+  await expect(page.locator(".vocabulary-row")).toHaveCount(48);
+  await expect(page.getByText(/corpus complet : 4[\s ]771/i)).toBeVisible();
   const occurrenceCounts = await page
     .locator(".vocabulary-row")
     .evaluateAll((rows) =>
@@ -194,6 +196,22 @@ test("vocabulary defaults to occurrence sorting", async ({ page }) => {
   expect(occurrenceCounts).toEqual(
     [...occurrenceCounts].sort((left, right) => right - left),
   );
+
+  await page.getByRole("button", { name: "Page 2 sur 100" }).click();
+  await expect(page.getByText("Page 2/100", { exact: false })).toBeVisible();
+  await expect(page.locator(".vocabulary-row")).toHaveCount(48);
+});
+
+test("custom lists browse every vocabulary page", async ({ page }) => {
+  await page.goto("/listes");
+  await page.getByRole("button", { name: /Créer ma première liste/i }).click();
+  await expect(
+    page.getByText(/4[\s ]771 unités couvrant tout le corpus/i),
+  ).toBeVisible();
+  await expect(page.locator(".custom-list-word-picker > button")).toHaveCount(48);
+  await page.getByRole("button", { name: "Page 2 sur 100" }).click();
+  await expect(page.getByText("Page 2/100", { exact: false })).toBeVisible();
+  await expect(page.locator(".custom-list-word-picker > button")).toHaveCount(48);
 });
 
 test("favorites become a persistent custom flashcard list", async ({ page }) => {
@@ -299,6 +317,42 @@ test("selected Quran verses create a deduplicated custom list", async ({ page })
   expect(storedCount).toBeGreaterThan(5);
 });
 
+test("verse selection is not capped at ten", async ({ page }) => {
+  const twelveAyahs = Array.from({ length: 12 }, (_, index) => {
+    const template = fatihaAyahs[index % fatihaAyahs.length];
+    const number = index + 1;
+    return {
+      ...template,
+      id: `1:${number}`,
+      number,
+      words: template.words.map((word, wordIndex) => ({
+        ...word,
+        id: `1:${number}:${wordIndex + 1}`,
+      })),
+    };
+  });
+  await page.route("**/api/quran/chapters/1/verses", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ source: "test-fixture", ayahs: twelveAyahs }),
+    });
+  });
+  await page.goto("/listes");
+  await page.getByRole("button", { name: /Créer ma première liste/i }).click();
+  await page.getByRole("button", { name: /Sourate et versets/i }).click();
+  await page.getByRole("button", { name: /Charger les versets/i }).click();
+  await expect(page.locator(".custom-list-ayah-grid > button")).toHaveCount(12);
+  await page
+    .getByRole("button", { name: "Sélectionner toute la sourate", exact: true })
+    .click();
+  await expect(page.getByText("12 versets sélectionnés", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Ajouter les mots des 12 versets/i }).click();
+  await expect(page.getByLabel("Nom de la liste")).toHaveValue(
+    "Mes versets de Al-Fātiḥa",
+  );
+});
+
 test("progression records learned surahs locally", async ({ page }) => {
   await page.goto("/progression");
   const fatiha = page.getByRole("button", { name: /Al-Fātiḥa.*L’Ouverture/i });
@@ -329,9 +383,9 @@ test("admin opens the real local vocabulary review queue", async ({ page }) => {
   expect(sessionStatus).toBe(200);
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: /Vérifier les 1 000 mots/i }),
+    page.getByRole("heading", { name: /Vérifier les 4 771 mots/i }),
   ).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText(/1 000 à vérifier|1000 à vérifier/i)).toBeVisible();
+  await expect(page.getByText(/4 771 à vérifier|4771 à vérifier/i)).toBeVisible();
   await expect(page.getByLabel(/Traduction française proposée/i)).not.toHaveValue(
     /à vérifier|à valider/i,
   );

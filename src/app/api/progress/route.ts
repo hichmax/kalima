@@ -24,8 +24,8 @@ const customWordListSchema = z.object({
   description: z.string().max(300),
   origin: z.enum(["manual", "favorites", "surah", "verses", "mixed"]),
   sourceLabels: z.array(z.string().max(120)).max(20),
-  words: z.array(practiceWordSchema).max(3000),
-  masteredWordIds: z.array(z.string().max(80)).max(3000),
+  words: z.array(practiceWordSchema).max(5000),
+  masteredWordIds: z.array(z.string().max(80)).max(5000),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -39,8 +39,8 @@ const progressSchema = z.object({
   learnedSurahIds: z.array(z.number().int().min(1).max(114)).max(114),
   reviewCount: z.number().int().min(0).max(100_000),
   reviewMasteredWordIds: z.array(z.string().max(80)).max(5000),
-  favoriteVocabularyWordIds: z.array(z.string().max(80)).max(3000),
-  savedPracticeWords: z.array(practiceWordSchema).max(3000),
+  favoriteVocabularyWordIds: z.array(z.string().max(80)).max(5000),
+  savedPracticeWords: z.array(practiceWordSchema).max(5000),
   customWordLists: z.array(customWordListSchema).max(30),
   phoneticAssist: z.enum(["complete", "progressive", "hidden"]),
   dailyMinutes: z.union([

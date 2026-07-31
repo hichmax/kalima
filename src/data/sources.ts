@@ -15,7 +15,7 @@ export const contentSources: SourceRef[] = [
     url: "https://corpus.quran.com/wordbyword.jsp",
     version: "Corpus morphologique 0.4 + miroir local identifié",
     license: "GNU GPL — licence et attribution publiées par le corpus",
-    accessedAt: "2026-07-27",
+    accessedAt: "2026-07-31",
   },
   {
     id: "quran-foundation-v4",
@@ -23,7 +23,7 @@ export const contentSources: SourceRef[] = [
     url: "https://api-docs.quran.foundation/docs/sdk/javascript/verses/",
     version: "Content API v4",
     license: "Developer Terms apply",
-    accessedAt: "2026-07-27",
+    accessedAt: "2026-07-31",
   },
   {
     id: "unicode-arabic-17",

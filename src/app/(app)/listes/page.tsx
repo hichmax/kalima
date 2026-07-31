@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CustomListsWorkspace } from "@/components/custom-lists-workspace";
 import { PageHeader } from "@/components/page-header";
 import { chapters } from "@/data/chapters";
-import { getVocabularyUnits } from "@/lib/vocabulary";
+import { getVocabularyPage } from "@/lib/vocabulary";
 
 export const dynamic = "force-dynamic";
 
@@ -11,14 +11,18 @@ export const metadata: Metadata = {
 };
 
 export default function ListsPage() {
+  const initialVocabularyPage = getVocabularyPage();
   return (
     <>
       <PageHeader
         eyebrow="Flashcards sur mesure"
         title="Crée les listes que tu veux vraiment apprendre."
-        description="Mélange tes favoris, tes mots enregistrés, une sourate entière ou jusqu’à 10 versets choisis."
+        description="Mélange tes favoris, tes mots enregistrés, n’importe quels mots du corpus, une sourate entière ou autant de versets que tu veux."
       />
-      <CustomListsWorkspace units={getVocabularyUnits()} chapters={chapters} />
+      <CustomListsWorkspace
+        initialVocabularyPage={initialVocabularyPage}
+        chapters={chapters}
+      />
     </>
   );
 }

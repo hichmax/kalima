@@ -189,7 +189,7 @@ export default function DashboardPage() {
           <div className="soft-card">
             <strong>{customListWords} carte{customListWords === 1 ? "" : "s"} enregistrée{customListWords === 1 ? "" : "s"}</strong>
             <p className="muted">
-              Favoris, vocabulaire, sourate entière ou jusqu’à 10 versets choisis.
+              Favoris, corpus complet, sourate entière ou autant de versets que tu veux.
             </p>
           </div>
           <Link className="btn btn-secondary" href="/listes">
