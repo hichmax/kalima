@@ -4,7 +4,6 @@ import {
   scheduleReview,
   selectRandomReviewUnits,
 } from "@/lib/review";
-import type { VocabularyUnit } from "@/lib/types";
 
 describe("FSRS review scheduling", () => {
   it("schedules an easy answer after an again answer", () => {
@@ -20,7 +19,7 @@ describe("FSRS review scheduling", () => {
   it("selects unique random words from the whole eligible vocabulary", () => {
     const units = Array.from({ length: 12 }, (_, index) => ({
       id: `word-${index}`,
-    })) as VocabularyUnit[];
+    }));
     const selected = selectRandomReviewUnits(
       units,
       5,

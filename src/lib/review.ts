@@ -6,8 +6,6 @@ import {
   type Card,
   type Grade,
 } from "ts-fsrs";
-import type { VocabularyUnit } from "@/lib/types";
-
 export type ReviewChoice = "again" | "hard" | "good" | "easy";
 
 export const reviewRating: Record<ReviewChoice, Grade> = {
@@ -17,12 +15,12 @@ export const reviewRating: Record<ReviewChoice, Grade> = {
   easy: Rating.Easy,
 };
 
-export function selectRandomReviewUnits(
-  units: VocabularyUnit[],
+export function selectRandomReviewUnits<T extends { id: string }>(
+  units: T[],
   count: number,
   excludedIds: string[] = [],
   random: () => number = Math.random,
-): VocabularyUnit[] {
+): T[] {
   const excluded = new Set(excludedIds);
   const seen = new Set<string>();
   const eligible = units.filter((unit) => {

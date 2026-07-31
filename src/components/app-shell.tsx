@@ -5,6 +5,7 @@ import {
   CardsThree,
   ChartDonut,
   Books,
+  FolderSimple,
   House,
   Path,
   ShieldCheck,
@@ -21,6 +22,7 @@ const desktopNav = [
   { label: "Coran", href: "/coran", icon: BookOpenText },
   { label: "Apprendre", href: "/apprendre", icon: Path },
   { label: "Réviser", href: "/reviser", icon: CardsThree },
+  { label: "Mes listes", href: "/listes", icon: FolderSimple },
   { label: "Vocabulaire", href: "/vocabulaire", icon: Books },
   { label: "Progression", href: "/progression", icon: ChartDonut },
 ] as const;
@@ -30,7 +32,7 @@ const mobileNav = [
   { label: "Apprendre", href: "/apprendre", icon: Path },
   { label: "Coran", href: "/coran", icon: BookOpenText },
   { label: "Réviser", href: "/reviser", icon: CardsThree },
-  { label: "Progression", href: "/progression", icon: ChartDonut },
+  { label: "Listes", href: "/listes", icon: FolderSimple },
 ] as const;
 
 const isCurrent = (pathname: string, href: string) =>

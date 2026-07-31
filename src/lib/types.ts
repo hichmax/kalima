@@ -51,6 +51,39 @@ export interface Ayah {
   audioUrl?: string;
 }
 
+export interface PracticeWord {
+  id: string;
+  arabic: string;
+  simpleArabic: string;
+  beginnerPhonetic: string;
+  transliteration: string;
+  primaryMeaningFr: string;
+  lemma: string;
+  occurrences: number;
+  examples: string[];
+  sourceIds: string[];
+  audioUrl?: string;
+}
+
+export type CustomWordListOrigin =
+  | "manual"
+  | "favorites"
+  | "surah"
+  | "verses"
+  | "mixed";
+
+export interface CustomWordList {
+  id: string;
+  name: string;
+  description: string;
+  origin: CustomWordListOrigin;
+  sourceLabels: string[];
+  words: PracticeWord[];
+  masteredWordIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Surah {
   id: number;
   nameArabic: string;
@@ -60,26 +93,15 @@ export interface Surah {
   revelationPlace: "Mecque" | "Médine";
 }
 
-export interface VocabularyUnit {
-  id: string;
-  arabic: string;
-  simpleArabic: string;
-  beginnerPhonetic: string;
-  transliteration: string;
-  primaryMeaningFr: string;
+export interface VocabularyUnit extends PracticeWord {
   contextualMeanings: string[];
   partOfSpeech: PartOfSpeech;
-  lemma: string;
   root: string | null;
   frequency: number;
-  occurrences: number;
-  examples: string[];
   level: 1 | 2 | 3;
   themes: string[];
   family: string | null;
-  sourceIds: string[];
   status: ReviewStatus;
-  audioUrl?: string;
 }
 
 export interface LearnerProgress {
@@ -91,6 +113,9 @@ export interface LearnerProgress {
   learnedSurahIds: number[];
   reviewCount: number;
   reviewMasteredWordIds: string[];
+  favoriteVocabularyWordIds: string[];
+  savedPracticeWords: PracticeWord[];
+  customWordLists: CustomWordList[];
   phoneticAssist: "complete" | "progressive" | "hidden";
   dailyMinutes: 5 | 10 | 15 | 20 | 30;
   learningProfile: {

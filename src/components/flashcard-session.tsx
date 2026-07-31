@@ -17,7 +17,7 @@ import {
   selectRandomReviewUnits,
   type ReviewChoice,
 } from "@/lib/review";
-import type { VocabularyUnit } from "@/lib/types";
+import type { PracticeWord } from "@/lib/types";
 
 const controls: { choice: ReviewChoice; label: string; hint: string }[] = [
   { choice: "again", label: "À revoir", hint: "Je ne l’avais pas" },
@@ -30,7 +30,17 @@ const countOptions = [5, 10, 20, 30, 50] as const;
 
 type SessionState = "setup" | "active" | "summary";
 
-export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
+export function FlashcardSession({
+  units,
+  masteredWordIds: controlledMasteredWordIds,
+  onMasterWord,
+  poolLabel = "toute la base",
+}: {
+  units: PracticeWord[];
+  masteredWordIds?: string[];
+  onMasterWord?: (wordId: string) => void;
+  poolLabel?: string;
+}) {
   const [selectedCount, setSelectedCount] = useState(10);
   const [sessionState, setSessionState] = useState<SessionState>("setup");
   const [queueIds, setQueueIds] = useState<string[]>([]);
@@ -49,23 +59,29 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
     [units],
   );
   const currentUnit = unitById.get(queueIds[0]);
+  const persistentMasteredWordIds =
+    controlledMasteredWordIds ?? progress.reviewMasteredWordIds;
   const masteredWordIds = useMemo(
-    () => new Set(progress.reviewMasteredWordIds),
-    [progress.reviewMasteredWordIds],
+    () => new Set(persistentMasteredWordIds),
+    [persistentMasteredWordIds],
   );
   const availableUnits = useMemo(
     () => units.filter((unit) => !masteredWordIds.has(unit.id)),
     [masteredWordIds, units],
   );
+  const visibleCountOptions =
+    availableUnits.length > 0 && availableUnits.length < 5
+      ? [availableUnits.length]
+      : countOptions;
   const sessionUnits = sessionUnitIds
     .map((id) => unitById.get(id))
-    .filter((unit): unit is VocabularyUnit => Boolean(unit));
+    .filter((unit): unit is PracticeWord => Boolean(unit));
 
   const startSession = () => {
     const selected = selectRandomReviewUnits(
       units,
       selectedCount,
-      progress.reviewMasteredWordIds,
+      persistentMasteredWordIds,
     );
     const ids = selected.map((unit) => unit.id);
     setSessionUnitIds(ids);
@@ -99,19 +115,24 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
     setMasteredIds(nextMastered);
     setQueueIds(nextQueue);
     setRevealed(false);
-    updateProgress(
-      choice === "easy"
-        ? {
-            reviewCount: nextQueue.length,
-            reviewMasteredWordIds: Array.from(
-              new Set([...progress.reviewMasteredWordIds, currentId]),
-            ),
-            learnedWordIds: Array.from(
-              new Set([...progress.learnedWordIds, currentId]),
-            ),
-          }
-        : { reviewCount: nextQueue.length },
-    );
+    if (choice === "easy") {
+      onMasterWord?.(currentId);
+      updateProgress({
+        reviewCount: nextQueue.length,
+        ...(controlledMasteredWordIds === undefined
+          ? {
+              reviewMasteredWordIds: Array.from(
+                new Set([...progress.reviewMasteredWordIds, currentId]),
+              ),
+            }
+          : {}),
+        learnedWordIds: Array.from(
+          new Set([...progress.learnedWordIds, currentId]),
+        ),
+      });
+    } else {
+      updateProgress({ reviewCount: nextQueue.length });
+    }
 
     if (!nextQueue.length) {
       setStoppedEarly(false);
@@ -133,14 +154,15 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
           <p className="eyebrow">Préparer la séance</p>
           <h2>Combien de mots veux-tu réviser ?</h2>
           <p className="muted">
-            Chaque séance tire au hasard dans les {availableUnits.length} mots
-            encore disponibles de toute la base. Un mot classé{" "}
+            Chaque séance tire au hasard dans les {availableUnits.length} mot
+            {availableUnits.length === 1 ? "" : "s"} encore disponible
+            {availableUnits.length === 1 ? "" : "s"} de {poolLabel}. Un mot classé{" "}
             <strong>Facile</strong> ne sera plus proposé dans les prochaines
             séances.
           </p>
         </div>
         <div className="review-count-options" aria-label="Nombre de mots">
-          {countOptions.map((count) => (
+          {visibleCountOptions.map((count) => (
             <button
               className={selectedCount === count ? "selected" : ""}
               type="button"
@@ -169,7 +191,7 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
           disabled={availableUnits.length === 0}
         >
           {availableUnits.length
-            ? `Commencer avec ${Math.min(selectedCount, availableUnits.length)} mots`
+            ? `Commencer avec ${Math.min(selectedCount, availableUnits.length)} mot${Math.min(selectedCount, availableUnits.length) === 1 ? "" : "s"}`
             : "Tous les mots sont classés Facile"}{" "}
           <Play size={18} weight="fill" />
         </button>
@@ -322,7 +344,9 @@ export function FlashcardSession({ units }: { units: VocabularyUnit[] }) {
             </p>
             <div className="row">
               <BookOpenText size={18} />
-              <span>Exemple : {currentUnit.examples[0]}</span>
+              <span>
+                Exemple : {currentUnit.examples[0]?.replaceAll(":", " : ") || "référence contextuelle"}
+              </span>
             </div>
             <SourceReference sourceIds={currentUnit.sourceIds} />
           </div>

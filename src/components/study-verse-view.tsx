@@ -8,6 +8,7 @@ import { SourceReference } from "@/components/source-reference";
 import { WordButton } from "@/components/word-button";
 import { WordDetailSheet } from "@/components/word-detail-sheet";
 import { getChapter } from "@/data/chapters";
+import { mergePracticeWords, quranWordToPracticeWord } from "@/lib/custom-lists";
 import { toggleStoredId } from "@/lib/storage";
 import type { Ayah, QuranWord } from "@/lib/types";
 
@@ -80,12 +81,27 @@ export function StudyVerseView({ ayah }: { ayah: Ayah }) {
           onPrevious={() => move(-1)}
           onNext={() => move(1)}
           onAdd={() =>
-            updateProgress({
-              learnedWordIds: toggleStoredId(
-                progress.learnedWordIds,
-                selectedWord.id,
-              ),
-            })
+            updateProgress(
+              progress.learnedWordIds.includes(selectedWord.id)
+                ? {
+                    learnedWordIds: progress.learnedWordIds.filter(
+                      (id) => id !== selectedWord.id,
+                    ),
+                    savedPracticeWords: progress.savedPracticeWords.filter(
+                      (word) => word.id !== selectedWord.id,
+                    ),
+                  }
+                : {
+                    learnedWordIds: toggleStoredId(
+                      progress.learnedWordIds,
+                      selectedWord.id,
+                    ),
+                    savedPracticeWords: mergePracticeWords(
+                      progress.savedPracticeWords,
+                      [quranWordToPracticeWord(selectedWord, ayah)],
+                    ),
+                  },
+            )
           }
           added={progress.learnedWordIds.includes(selectedWord.id)}
         />

@@ -11,7 +11,9 @@ import type { PartOfSpeech, VocabularyUnit } from "@/lib/types";
 import { RootFamilyGraph } from "@/components/root-family-graph";
 import { QuranAudioPlayer } from "@/components/quran-audio-player";
 import { SourceReference } from "@/components/source-reference";
+import { useApp } from "@/components/providers";
 import { getWordPhonetic } from "@/lib/phonetics";
+import { toggleStoredId } from "@/lib/storage";
 
 const normalize = (value: string) =>
   value
@@ -38,6 +40,7 @@ const sortOptions = [
 type SortValue = (typeof sortOptions)[number]["value"];
 
 export function VocabularyLibrary({ units }: { units: VocabularyUnit[] }) {
+  const { progress, updateProgress } = useApp();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof filters)[number]["value"]>("all");
   const [sort, setSort] = useState<SortValue>("occurrences-desc");
@@ -77,6 +80,9 @@ export function VocabularyLibrary({ units }: { units: VocabularyUnit[] }) {
   const familyUnits = selected?.root
     ? units.filter((unit) => unit.root === selected.root)
     : [];
+  const favorite = selected
+    ? progress.favoriteVocabularyWordIds.includes(selected.id)
+    : false;
 
   return (
     <div className="vocabulary-layout">
@@ -155,8 +161,24 @@ export function VocabularyLibrary({ units }: { units: VocabularyUnit[] }) {
                 <p className="eyebrow">Unité {selected.id.replace("qac-lemma-", "#")}</p>
                 <p className="quran-text" lang="ar" dir="rtl">{selected.arabic}</p>
               </div>
-              <button className="btn btn-ghost btn-icon" type="button" aria-label="Ajouter aux favoris">
-                <Star size={21} />
+              <button
+                className="btn btn-ghost btn-icon"
+                type="button"
+                aria-label={
+                  favorite ? "Retirer ce mot des favoris" : "Ajouter ce mot aux favoris"
+                }
+                aria-pressed={favorite}
+                onClick={() =>
+                  selected &&
+                  updateProgress({
+                    favoriteVocabularyWordIds: toggleStoredId(
+                      progress.favoriteVocabularyWordIds,
+                      selected.id,
+                    ),
+                  })
+                }
+              >
+                <Star size={21} weight={favorite ? "fill" : "regular"} />
               </button>
             </div>
             <p className="vocabulary-phonetic" lang="fr-Latn" dir="ltr">

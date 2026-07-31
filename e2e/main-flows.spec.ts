@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fatihaAyahs } from "../src/data/quran-fixtures";
 
 test("landing connects to onboarding and learning space", async ({ page }) => {
   await page.goto("/");
@@ -195,6 +196,109 @@ test("vocabulary defaults to occurrence sorting", async ({ page }) => {
   );
 });
 
+test("favorites become a persistent custom flashcard list", async ({ page }) => {
+  await page.goto("/vocabulaire");
+  await page.getByRole("button", { name: /Ajouter ce mot aux favoris/i }).click();
+  await expect(
+    page.getByRole("button", { name: /Retirer ce mot des favoris/i }),
+  ).toHaveAttribute("aria-pressed", "true");
+
+  await page.goto("/listes");
+  await page.getByRole("button", { name: /Créer ma première liste/i }).click();
+  await page.getByLabel("Nom de la liste").fill("Mes mots favoris");
+  await page.getByRole("button", { name: /Favoris et enregistrés/i }).click();
+  await page.getByRole("button", { name: /Ajouter mes favoris/i }).click();
+  await page.getByRole("button", { name: /Créer la liste/i }).click();
+
+  await expect(page.getByRole("heading", { name: "Mes mots favoris" })).toBeVisible();
+  await expect(
+    page.locator(".custom-list-stats > div").first().getByText("1", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /S’entraîner/i }).click();
+  await page.getByRole("button", { name: /Commencer avec 1 mot/i }).click();
+  await expect(page.locator(".flashcard")).toHaveAttribute("data-review-unit-id");
+  await page.getByRole("button", { name: /Révéler la réponse/i }).click();
+  await page.getByRole("button", { name: /Facile/i }).click();
+  await expect(page.getByRole("heading", { name: /1 mot facile sur 1/i })).toBeVisible();
+
+  const storedLists = await page.evaluate(() => {
+    const progress = JSON.parse(
+      window.localStorage.getItem("kalima:progress:v2") || "{}",
+    ) as { customWordLists?: Array<{ words: unknown[]; masteredWordIds: string[] }> };
+    return progress.customWordLists || [];
+  });
+  expect(storedLists).toHaveLength(1);
+  expect(storedLists[0].words).toHaveLength(1);
+  expect(storedLists[0].masteredWordIds).toHaveLength(1);
+});
+
+test("a word saved from verse study can become a custom list", async ({ page }) => {
+  await page.goto("/coran/1/1/etude");
+  await page.getByRole("button", { name: /Ajouter aux révisions/i }).click();
+  await expect(
+    page.getByRole("button", { name: /Ajouté aux révisions/i }),
+  ).toBeVisible();
+
+  await page.goto("/listes");
+  await page.getByRole("button", { name: /Créer ma première liste/i }).click();
+  await page.getByLabel("Nom de la liste").fill("Mots de mon étude");
+  await page.getByRole("button", { name: /Favoris et enregistrés/i }).click();
+  await page.getByRole("button", { name: /Ajouter mes mots enregistrés/i }).click();
+  await page.getByRole("button", { name: /Créer la liste/i }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Mots de mon étude" }),
+  ).toBeVisible();
+  const stored = await page.evaluate(() => {
+    const progress = JSON.parse(
+      window.localStorage.getItem("kalima:progress:v2") || "{}",
+    ) as {
+      savedPracticeWords?: Array<{ id: string }>;
+      customWordLists?: Array<{ words: Array<{ id: string }> }>;
+    };
+    return {
+      savedId: progress.savedPracticeWords?.[0]?.id,
+      listedId: progress.customWordLists?.[0]?.words[0]?.id,
+    };
+  });
+  expect(stored.savedId).toBeTruthy();
+  expect(stored.listedId).toBe(stored.savedId);
+});
+
+test("selected Quran verses create a deduplicated custom list", async ({ page }) => {
+  await page.route("**/api/quran/chapters/1/verses", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ source: "test-fixture", ayahs: fatihaAyahs }),
+    });
+  });
+  await page.goto("/listes");
+  await page.getByRole("button", { name: /Créer ma première liste/i }).click();
+  await page.getByRole("button", { name: /Sourate et versets/i }).click();
+  await page.getByRole("button", { name: /Charger les versets/i }).click();
+  const ayahButtons = page.locator(".custom-list-ayah-grid > button");
+  await expect(ayahButtons).toHaveCount(7);
+  await ayahButtons.nth(0).click();
+  await ayahButtons.nth(1).click();
+  await page.getByRole("button", { name: /Ajouter les mots des 2 versets/i }).click();
+  await expect(page.getByLabel("Nom de la liste")).toHaveValue(
+    "Mes versets de Al-Fātiḥa",
+  );
+  await page.getByRole("button", { name: /Créer la liste/i }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Mes versets de Al-Fātiḥa" }),
+  ).toBeVisible();
+  const storedCount = await page.evaluate(() => {
+    const progress = JSON.parse(
+      window.localStorage.getItem("kalima:progress:v2") || "{}",
+    ) as { customWordLists?: Array<{ words: unknown[] }> };
+    return progress.customWordLists?.[0]?.words.length || 0;
+  });
+  expect(storedCount).toBeGreaterThan(5);
+});
+
 test("progression records learned surahs locally", async ({ page }) => {
   await page.goto("/progression");
   const fatiha = page.getByRole("button", { name: /Al-Fātiḥa.*L’Ouverture/i });
@@ -256,7 +360,13 @@ test("key pages fit every required breakpoint", async ({ page }, testInfo) => {
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const route of ["/apprendre", "/reviser", "/vocabulaire", "/progression"]) {
+  for (const route of [
+    "/apprendre",
+    "/reviser",
+    "/listes",
+    "/vocabulaire",
+    "/progression",
+  ]) {
     await page.goto(route);
     await expect
       .poll(() =>

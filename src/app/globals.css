@@ -3631,6 +3631,571 @@ button:disabled {
   resize: vertical;
 }
 
+.custom-lists-workspace {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.custom-lists-rail {
+  position: sticky;
+  top: 24px;
+  overflow: hidden;
+  min-height: 420px;
+}
+
+.custom-lists-rail-head,
+.custom-list-builder-head,
+.custom-list-detail-head,
+.custom-list-draft-head,
+.custom-list-training-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.custom-lists-rail-head {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+
+.custom-lists-rail h2,
+.custom-list-builder h2,
+.custom-list-detail h2,
+.custom-list-training-head h2,
+.custom-lists-welcome h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.custom-lists-rail-list {
+  display: grid;
+  max-height: 60dvh;
+  padding: 8px;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.custom-lists-rail-list > button {
+  display: grid;
+  width: 100%;
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-soft);
+  text-align: left;
+  background: transparent;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.custom-lists-rail-list > button:hover,
+.custom-lists-rail-list > button.active {
+  border-color: var(--border);
+  color: var(--forest);
+  background: var(--sage-100);
+}
+
+.custom-lists-rail-list strong,
+.custom-lists-rail-list small {
+  display: block;
+}
+
+.custom-lists-rail-list small {
+  margin-top: 2px;
+  color: var(--ink-faint);
+  font-size: .66rem;
+}
+
+.custom-lists-rail-empty {
+  display: grid;
+  min-height: 250px;
+  padding: 24px;
+  place-content: center;
+  place-items: center;
+  gap: 10px;
+  color: var(--ink-faint);
+  font-size: .78rem;
+  text-align: center;
+}
+
+.custom-list-builder,
+.custom-list-detail,
+.custom-lists-welcome {
+  padding: clamp(22px, 4vw, 38px);
+}
+
+.custom-list-builder {
+  display: grid;
+  gap: 26px;
+}
+
+.custom-list-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.custom-list-fields label,
+.custom-list-chapter-tools label {
+  display: grid;
+  gap: 7px;
+  color: var(--ink-soft);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.custom-list-fields .input {
+  min-height: 50px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface-solid);
+}
+
+.custom-list-source-tabs {
+  display: grid;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  background: var(--sage-50);
+}
+
+.custom-list-source-tabs button {
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--ink-soft);
+  background: transparent;
+  font-size: .76rem;
+  font-weight: 750;
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.custom-list-source-tabs button:hover,
+.custom-list-source-tabs button.active {
+  color: var(--forest);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-sm);
+}
+
+.custom-list-source-panel {
+  display: grid;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  gap: 14px;
+  background: color-mix(in srgb, var(--sage-50) 55%, transparent);
+  animation: answer-in 240ms var(--ease) both;
+}
+
+.custom-list-helper {
+  margin: -4px 0 0;
+  font-size: .72rem;
+}
+
+.custom-list-word-picker {
+  display: grid;
+  overflow-y: auto;
+  max-height: 470px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.custom-list-word-picker > button {
+  display: grid;
+  min-height: 82px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  background: var(--surface-solid);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.custom-list-word-picker > button:hover,
+.custom-list-word-picker > button.selected {
+  border-color: var(--sage-500);
+  background: var(--sage-100);
+}
+
+.custom-list-word-picker .quran-text {
+  color: var(--forest);
+  font-size: 1.55rem;
+  text-align: center;
+}
+
+.custom-list-word-picker strong,
+.custom-list-word-picker small {
+  display: block;
+}
+
+.custom-list-word-picker strong {
+  line-height: 1.35;
+}
+
+.custom-list-word-picker small {
+  margin-top: 3px;
+  color: var(--ink-faint);
+  font-size: .65rem;
+}
+
+.custom-list-no-results {
+  display: grid;
+  min-height: 160px;
+  margin: 0;
+  place-items: center;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.custom-list-import-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.custom-list-import-cards > button {
+  display: grid;
+  min-height: 142px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  align-content: center;
+  justify-items: start;
+  gap: 6px;
+  color: var(--forest-soft);
+  text-align: left;
+  background: var(--surface-solid);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.custom-list-import-cards > button:hover:not(:disabled) {
+  border-color: var(--sage-500);
+  background: var(--sage-100);
+}
+
+.custom-list-import-cards small {
+  color: var(--ink-faint);
+}
+
+.custom-list-empty-state {
+  display: grid;
+  min-height: 140px;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 14px;
+}
+
+.custom-list-empty-state p {
+  margin: 4px 0 0;
+}
+
+.custom-list-chapter-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.custom-list-chapter-tools .select {
+  min-height: 48px;
+}
+
+.custom-list-quran-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.custom-list-ayah-grid {
+  display: grid;
+  overflow-y: auto;
+  max-height: 490px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.custom-list-ayah-grid > button {
+  display: grid;
+  min-height: 100px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  grid-template-columns: 28px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-solid);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.custom-list-ayah-grid > button:hover,
+.custom-list-ayah-grid > button.selected {
+  border-color: var(--sage-500);
+  background: var(--sage-100);
+}
+
+.custom-list-ayah-grid > button > span {
+  color: var(--gold);
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+.custom-list-ayah-grid .quran-text {
+  overflow: hidden;
+  max-height: 78px;
+  margin: 0;
+  color: var(--forest);
+  font-size: 1.12rem;
+  font-weight: 400;
+  text-align: right;
+}
+
+.custom-list-draft {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-solid);
+}
+
+.custom-list-draft h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+}
+
+.custom-list-draft-words {
+  display: flex;
+  overflow-y: auto;
+  max-height: 240px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.custom-list-draft-words > span {
+  display: inline-flex;
+  min-height: 44px;
+  padding: 3px 4px 3px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  align-items: center;
+  gap: 5px;
+  background: var(--sage-50);
+}
+
+.custom-list-draft-words .quran-text {
+  font-size: 1.08rem;
+}
+
+.custom-list-draft-words button {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.custom-list-draft-words button:hover {
+  background: var(--sage-100);
+}
+
+.custom-list-more {
+  color: var(--ink-faint);
+  font-size: .72rem;
+}
+
+.custom-list-message {
+  padding: 12px 15px;
+  margin: -10px 0 0;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  color: var(--forest-soft);
+  background: var(--sage-50);
+  font-size: .78rem;
+}
+
+.custom-list-builder-actions,
+.custom-list-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.custom-lists-welcome {
+  display: grid;
+  min-height: 540px;
+  place-content: center;
+  justify-items: start;
+  gap: 12px;
+}
+
+.custom-lists-welcome > p {
+  max-width: 58ch;
+  margin: 0;
+}
+
+.custom-lists-welcome-icon {
+  display: inline-flex;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  background: var(--sage-50);
+}
+
+.custom-list-detail {
+  display: grid;
+  gap: 22px;
+}
+
+.custom-list-detail-head .muted {
+  max-width: 62ch;
+  margin-bottom: 0;
+}
+
+.custom-list-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.custom-list-stats > div {
+  display: grid;
+  min-height: 92px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  place-content: center;
+  text-align: center;
+  background: var(--sage-50);
+}
+
+.custom-list-stats strong {
+  font-family: var(--font-serif);
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.custom-list-stats span {
+  margin-top: 5px;
+  color: var(--ink-faint);
+  font-size: .66rem;
+}
+
+.custom-list-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.custom-list-detail-words {
+  display: grid;
+  overflow-y: auto;
+  max-height: 540px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.custom-list-detail-words article {
+  display: grid;
+  min-height: 80px;
+  padding: 10px 13px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-solid);
+}
+
+.custom-list-detail-words article:nth-child(2n) {
+  border-right: 0;
+}
+
+.custom-list-detail-words article.mastered {
+  color: var(--forest-soft);
+  background: var(--sage-50);
+}
+
+.custom-list-detail-words .quran-text {
+  color: var(--forest);
+  font-size: 1.45rem;
+  text-align: center;
+}
+
+.custom-list-detail-words strong,
+.custom-list-detail-words small {
+  display: block;
+}
+
+.custom-list-detail-words small {
+  color: var(--ink-faint);
+  font-size: .66rem;
+}
+
+.custom-list-detail-words svg {
+  color: var(--sage-500);
+}
+
+.custom-list-limit-note {
+  margin: -12px 0 0;
+  font-size: .7rem;
+  text-align: center;
+}
+
+.custom-list-delete {
+  color: var(--rose);
+}
+
+.custom-list-training {
+  display: grid;
+  gap: 24px;
+}
+
+.custom-list-training-head {
+  align-items: center;
+}
+
+.custom-list-training-head p {
+  margin: 4px 0 0;
+}
+
 .validation-actions {
   display: flex;
   flex-wrap: wrap;
@@ -3753,6 +4318,20 @@ button:disabled {
 
   .alphabet-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .custom-lists-workspace {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+
+  .custom-list-word-picker,
+  .custom-list-ayah-grid,
+  .custom-list-detail-words {
+    grid-template-columns: 1fr;
+  }
+
+  .custom-list-detail-words article {
+    border-right: 0;
   }
 }
 
@@ -4107,9 +4686,68 @@ button:disabled {
 
   .vocabulary-layout,
   .memorization-layout,
-  .progress-hero {
+  .progress-hero,
+  .custom-lists-workspace {
     display: flex;
     flex-direction: column;
+  }
+
+  .custom-lists-rail,
+  .custom-lists-main {
+    position: static;
+    width: 100%;
+  }
+
+  .custom-lists-rail {
+    min-height: 0;
+  }
+
+  .custom-lists-rail-list {
+    display: flex;
+    overflow-x: auto;
+    max-height: none;
+    scroll-snap-type: x mandatory;
+  }
+
+  .custom-lists-rail-list > button {
+    min-width: 230px;
+    scroll-snap-align: start;
+  }
+
+  .custom-lists-rail-empty {
+    min-height: 100px;
+  }
+
+  .custom-list-fields,
+  .custom-list-import-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .custom-list-source-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .custom-list-source-tabs button {
+    padding-inline: 6px;
+    font-size: .7rem;
+  }
+
+  .custom-list-chapter-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .custom-list-detail-head,
+  .custom-list-training-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .custom-list-detail-head > .cluster {
+    align-items: stretch;
+  }
+
+  .custom-list-detail-head > .cluster .btn {
+    flex: 1;
   }
 
   .vocabulary-results,

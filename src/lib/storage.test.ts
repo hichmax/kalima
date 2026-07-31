@@ -24,6 +24,9 @@ describe("local progress", () => {
       JSON.stringify({ lastAyah: "2:255", dailyMinutes: 5 }),
     );
     expect(loadProgress().dailyChallenge.completedWordIds).toEqual([]);
+    expect(loadProgress().favoriteVocabularyWordIds).toEqual([]);
+    expect(loadProgress().savedPracticeWords).toEqual([]);
+    expect(loadProgress().customWordLists).toEqual([]);
     expect(loadProgress().lastAyah).toBe("2:255");
   });
 });

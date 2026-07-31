@@ -5,6 +5,7 @@ import {
   BookOpenText,
   CardsThree,
   CheckCircle,
+  FolderSimple,
   Headphones,
   Path,
   Sparkle,
@@ -34,6 +35,10 @@ export default function DashboardPage() {
       : vocabularyAnswer === "Entre 20 et 100"
         ? 10
         : 5;
+  const customListWords = progress.customWordLists.reduce(
+    (total, list) => total + list.words.length,
+    0,
+  );
   const metricCards = [
     { label: "Mots appris", value: String(progress.learnedWordIds.length), note: "conservés sur cet appareil", icon: BookOpenText },
     { label: "Défi du jour", value: `${challengeCount}/5`, note: "mots reconnus aujourd’hui", icon: Target },
@@ -164,10 +169,32 @@ export default function DashboardPage() {
               رَبّ · رَحْمَٰن · يَوْم
             </p>
             <p className="muted">
-              Commence par 5, 10, 20, 30 ou 50 mots parmi les plus fréquents.
+              Commence par 5, 10, 20, 30 ou 50 mots tirés dans toute la base.
             </p>
           </div>
           <Link className="btn btn-secondary" href="/reviser">Ouvrir les révisions</Link>
+        </article>
+        <article className="card card-pad stack">
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <div>
+              <p className="eyebrow">Flashcards sur mesure</p>
+              <h2 style={{ margin: 0 }}>
+                {progress.customWordLists.length
+                  ? `${progress.customWordLists.length} liste${progress.customWordLists.length === 1 ? " personnelle" : "s personnelles"}`
+                  : "Crée ta première liste"}
+              </h2>
+            </div>
+            <FolderSimple size={30} color="var(--gold)" />
+          </div>
+          <div className="soft-card">
+            <strong>{customListWords} carte{customListWords === 1 ? "" : "s"} enregistrée{customListWords === 1 ? "" : "s"}</strong>
+            <p className="muted">
+              Favoris, vocabulaire, sourate entière ou jusqu’à 10 versets choisis.
+            </p>
+          </div>
+          <Link className="btn btn-secondary" href="/listes">
+            Ouvrir mes listes <ArrowRight size={18} />
+          </Link>
         </article>
       </section>
 

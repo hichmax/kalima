@@ -5,6 +5,30 @@ import { getDatabase } from "@/lib/database";
 export const runtime = "nodejs";
 
 const deviceIdSchema = z.string().uuid();
+const practiceWordSchema = z.object({
+  id: z.string().min(1).max(80),
+  arabic: z.string().min(1).max(160),
+  simpleArabic: z.string().min(1).max(160),
+  beginnerPhonetic: z.string().max(240),
+  transliteration: z.string().max(240),
+  primaryMeaningFr: z.string().min(1).max(500),
+  lemma: z.string().max(160),
+  occurrences: z.number().int().min(0).max(100_000),
+  examples: z.array(z.string().max(80)).max(10),
+  sourceIds: z.array(z.string().max(80)).max(12),
+  audioUrl: z.string().url().optional(),
+});
+const customWordListSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(80),
+  description: z.string().max(300),
+  origin: z.enum(["manual", "favorites", "surah", "verses", "mixed"]),
+  sourceLabels: z.array(z.string().max(120)).max(20),
+  words: z.array(practiceWordSchema).max(3000),
+  masteredWordIds: z.array(z.string().max(80)).max(3000),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
 
 const progressSchema = z.object({
   lastRoute: z.string().startsWith("/").max(240),
@@ -15,6 +39,9 @@ const progressSchema = z.object({
   learnedSurahIds: z.array(z.number().int().min(1).max(114)).max(114),
   reviewCount: z.number().int().min(0).max(100_000),
   reviewMasteredWordIds: z.array(z.string().max(80)).max(5000),
+  favoriteVocabularyWordIds: z.array(z.string().max(80)).max(3000),
+  savedPracticeWords: z.array(practiceWordSchema).max(3000),
+  customWordLists: z.array(customWordListSchema).max(30),
   phoneticAssist: z.enum(["complete", "progressive", "hidden"]),
   dailyMinutes: z.union([
     z.literal(5),
