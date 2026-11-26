@@ -24,14 +24,23 @@ const LEGACY_SCOPE = "content";
 /** Un User-Agent explicite : sans lui, la passerelle peut répondre 403 « error code: 1010 ». */
 const USER_AGENT = "Kalima/2.0 (+https://github.com/hichmax/kalima)";
 
-const environmentSchema = z.enum(["prelive", "production"]);
-export type QfEnvironment = z.infer<typeof environmentSchema>;
+export type QfEnvironment = "prelive" | "production";
+
+/**
+ * Tolère les variantes saisies dans Vercel : « production », « prod », une URL de production
+ * (https://oauth2.quran.foundation), ou « prelive » / une URL prelive. Vide → production.
+ */
+export function parseQfEnvironment(value: string | undefined): QfEnvironment {
+  const v = (value ?? "").trim().toLowerCase();
+  if (v.includes("prelive") || v.includes("pre-live") || v === "test") return "prelive";
+  return "production";
+}
 
 function getConfig() {
   const clientId = process.env.QF_CLIENT_ID?.trim();
   const clientSecret = process.env.QF_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) return null;
-  const environment = environmentSchema.catch("prelive").parse(process.env.QF_ENV?.trim());
+  const environment = parseQfEnvironment(process.env.QF_ENV);
   return {
     clientId,
     clientSecret,
@@ -183,4 +192,16 @@ export async function getChapterMedia(chapter: number): Promise<VerseMedia[]> {
       audio: absolute(verse.audio?.url, VERSE_AUDIO_BASE),
       words: verse.words.filter((w) => w.char_type_name === "word").map((w) => absolute(w.audio_url, WORD_AUDIO_BASE)),
     }));
+}
+
+const verseByKeySchema = z.object({ verse: z.object({ words: z.array(wordSchema).default([]) }) });
+
+/** Audio de chaque mot d'un verset (léger : un seul verset, pas toute la sourate). */
+export async function getVerseWordAudio(chapter: number, verse: number): Promise<Array<string | null>> {
+  if (!Number.isInteger(chapter) || chapter < 1 || chapter > 114 || !Number.isInteger(verse) || verse < 1) {
+    throw new Error("Référence invalide");
+  }
+  const query = new URLSearchParams({ words: "true", word_fields: "audio_url" }).toString();
+  const body = verseByKeySchema.parse(await qfFetch(`/content/api/v4/verses/by_key/${chapter}:${verse}?${query}`));
+  return body.verse.words.filter((w) => w.char_type_name === "word").map((w) => absolute(w.audio_url, WORD_AUDIO_BASE));
 }

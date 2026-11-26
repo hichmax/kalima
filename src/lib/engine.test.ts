@@ -120,3 +120,14 @@ describe("générateurs", () => {
     expect(parts[2].fr).toContain("toi");
   });
 });
+
+describe("environnement Quran.Foundation", () => {
+  it("reconnaît les variantes saisies dans Vercel", async () => {
+    const { parseQfEnvironment } = await import("@/lib/quran-foundation");
+    expect(parseQfEnvironment("production")).toBe("production");
+    expect(parseQfEnvironment(" https://oauth2.quran.foundation ")).toBe("production");
+    expect(parseQfEnvironment(undefined)).toBe("production");
+    expect(parseQfEnvironment("prelive")).toBe("prelive");
+    expect(parseQfEnvironment("https://prelive-oauth2.quran.foundation")).toBe("prelive");
+  });
+});

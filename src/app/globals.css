@@ -3317,3 +3317,91 @@ html[data-theme="papier"] {
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 0.35);
 }
+
+/* ---------------------------------------------------------------- écouter un mot (section Mots) */
+.lemma-top {
+  align-items: center;
+}
+
+.lemma-listen {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--violet);
+  font-size: 1.1rem;
+  transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 200ms ease, color 200ms ease;
+}
+
+.lemma-listen:hover {
+  transform: scale(1.08);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.lemma-listen:active {
+  transform: scale(0.92);
+}
+
+.lemma-card {
+  /* Retour à la translucidité : un peu plus lent, en douceur (ease-out). */
+  transition:
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lemma-card[data-audio="loading"] .lemma-listen {
+  animation: listen-pulse 900ms ease-in-out infinite;
+}
+
+/* Pendant l'écoute : la bulle devient plus dense et s'illumine (montée rapide, ease-in-out). */
+.lemma-card[data-audio="playing"] {
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.1)) padding-box,
+    linear-gradient(rgba(52, 38, 98, 0.86), rgba(52, 38, 98, 0.86)) padding-box,
+    var(--lg-rim) border-box;
+  box-shadow:
+    var(--lg-shadow),
+    0 0 0 3px color-mix(in srgb, var(--violet) 28%, transparent),
+    0 18px 40px -12px color-mix(in srgb, var(--violet) 55%, transparent);
+  transition:
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 260ms cubic-bezier(0.65, 0, 0.35, 1),
+    box-shadow 260ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.lemma-card[data-audio="playing"] .lemma-listen {
+  background: var(--violet);
+  color: #fff;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--violet) 25%, transparent);
+}
+
+.lemma-card[data-audio="playing"] .lemma-ar {
+  color: #fff8ea;
+  text-shadow: 0 0 22px rgba(241, 226, 196, 0.45);
+}
+
+.lemma-ar {
+  transition: color 500ms ease, text-shadow 500ms ease;
+}
+
+.lemma-where {
+  min-height: 1.2em;
+  font-size: 0.78rem;
+}
+
+@keyframes listen-pulse {
+  50% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lemma-card[data-audio="loading"] .lemma-listen {
+    animation: none;
+  }
+}

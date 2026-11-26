@@ -21,6 +21,8 @@ export interface LemmaEntry {
   count: number;
   rank: number;
   coverage: number;
+  /** Première occurrence dans le Coran (sourate:verset:mot), pour l'écouter. */
+  firstRef: string | null;
   example: { ref: string; verse: QuranWord[]; focus: [number, number] } | null;
 }
 
@@ -108,6 +110,7 @@ export async function lemmaEntry(key: string, withExample = true): Promise<Lemma
     count: stat.count,
     rank: stat.rank,
     coverage: stat.coverage,
+    firstRef: stat.refs[0] ?? null,
     example,
   };
 }
