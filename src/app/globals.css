@@ -4295,3 +4295,17 @@ html:not([data-tajweed="off"]) .tj-silent { color: var(--tj-silent); }
 .tj-swatch.tj-ghunna { background: var(--tj-ghunna); }
 .tj-swatch.tj-qalqala { background: var(--tj-qalqala); }
 .tj-swatch.tj-silent { background: var(--tj-silent); }
+
+/* ---------------------------------------------------------------- page confidentialité */
+.privacy-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 1.1em;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+
+.privacy-list strong {
+  color: var(--ink);
+}

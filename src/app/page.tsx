@@ -176,6 +176,7 @@ export default async function Home() {
             <div className="row">
               <Link href="/sources" className="link faint">Sources et licences</Link>
               <Link href="/reglages" className="link faint">Exporter ma progression</Link>
+              <Link href="/confidentialite" className="link faint">Confidentialité</Link>
             </div>
           </footer>
         </div>

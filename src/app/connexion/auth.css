@@ -695,3 +695,12 @@ html[data-theme] .auth .seg-pill {
   display: grid;
   gap: 18px;
 }
+
+.auth-privacy {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: rgba(201, 187, 255, 0.45);
+  text-underline-offset: 3px;
+}

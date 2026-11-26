@@ -12,6 +12,7 @@ import {
   House,
   List,
   Seal,
+  ShieldCheck,
   SunHorizon,
   TextAa,
   UserCircle,
@@ -43,6 +44,7 @@ const MORE = [
   { href: "/mots", label: "Les mots", detail: "Les 300 mots les plus fréquents", icon: Books },
   { href: "/lecons", label: "Toutes les leçons", detail: "Refaire une leçon à tout moment", icon: GraduationCap },
   { href: "/sources", label: "Sources", detail: "D'où vient chaque contenu", icon: Seal },
+  { href: "/confidentialite", label: "Confidentialité", detail: "Tes données et tes droits", icon: ShieldCheck },
   { href: "/reglages", label: "Réglages", detail: "Phonétique, taille, sauvegarde", icon: GearSix },
 ] as const;
 

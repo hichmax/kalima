@@ -477,7 +477,10 @@ export function AuthScreen({
                 </form>
 
                 <p className="auth-note">
-                  Ce que tu as déjà fait sur cet appareil sera ajouté à ton compte : rien n&apos;est perdu.
+                  Ce que tu as déjà fait sur cet appareil sera ajouté à ton compte : rien n&apos;est perdu.{" "}
+                  <Link href="/confidentialite" className="auth-privacy">
+                    Tes données et tes droits
+                  </Link>
                 </p>
               </motion.div>
             )}

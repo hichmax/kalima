@@ -169,7 +169,9 @@ export function AccountView() {
 
       <section className="glass card stack account-danger" style={{ "--gap": "10px" } as React.CSSProperties}>
         <h2 className="h3">Supprimer mon compte</h2>
-        <p className="muted">Ton compte et la copie en ligne de ta progression sont effacés définitivement. La copie sur cet appareil n&apos;est pas touchée.</p>
+        <p className="muted">Ton compte et la copie en ligne de ta progression sont effacés définitivement. La copie sur cet appareil n&apos;est pas touchée.{" "}
+          <Link href="/confidentialite" className="inline-link">Ce que Kalima garde</Link>
+        </p>
         <AnimatePresence initial={false} mode="wait">
           {confirmDelete ? (
             <motion.form
