@@ -1,5 +1,6 @@
 "use client";
 
+import { Segmented } from "@/components/segmented";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import type { LemmaEntry } from "@/lib/learning-data";
@@ -43,19 +44,13 @@ export function WordLibrary({ entries }: { entries: LemmaEntry[] }) {
         <span className="visually-hidden">Rechercher un mot</span>
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Un sens, un mot arabe, une racine" />
       </label>
-      <div className="segmented" aria-label="Filtrer">
-        {FILTERS.map(([id, label]) => (
-          <button key={id} type="button" aria-pressed={filter === id} onClick={() => setFilter(id)}>
-            {label}
-          </button>
-        ))}
-      </div>
+      <Segmented label="Filtrer" value={filter} onChange={setFilter} options={FILTERS.map(([id, label]) => ({ value: id, label }))} />
       <p className="faint">{visible.length} mots</p>
-      <ol className="lemma-grid">
+      <ol className="lemma-grid fade-swap" key={filter}>
         {visible.map((e) => {
           const known = hydrated && Boolean(state.cards[`lemma:${e.key}`]);
           return (
-            <li key={e.key} className="glass thin lemma-card" data-known={known || undefined}>
+            <li key={e.key} className="glass thin lemma-card tilt" data-known={known || undefined}>
               <div className="row between">
                 <span className="faint num">n° {e.rank}</span>
                 <span className="faint num">{e.count}×</span>

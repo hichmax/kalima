@@ -30,7 +30,7 @@ export default function LessonsPage() {
             {allLessons
               .filter((l) => l.track === track.id)
               .map((lesson) => (
-                <Link key={lesson.id} href={`/lecons/${lesson.id}`} className="glass card stack lesson-card" style={{ "--gap": "6px" } as React.CSSProperties}>
+                <Link key={lesson.id} href={`/lecons/${lesson.id}`} className="glass card stack lesson-card tilt" style={{ "--gap": "6px" } as React.CSSProperties}>
                   <span className="faint">{dayOf(lesson.id) ? `Jour ${dayOf(lesson.id)}` : "Révision"} · {lesson.minutes} min</span>
                   <h3>{lesson.title}</h3>
                   <p className="muted">{lesson.subtitle}</p>

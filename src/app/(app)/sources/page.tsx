@@ -54,7 +54,7 @@ export default function SourcesPage() {
         <h2>Références</h2>
         <ul className="source-cards">
           {sources.map((source) => (
-            <li key={source.id} className="glass thin source-card">
+            <li key={source.id} className="glass thin source-card tilt">
               <div className="row between">
                 <span className="chip">{KIND_LABEL[source.kind]}</span>
                 {source.verified ? (

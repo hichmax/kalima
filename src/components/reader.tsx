@@ -1,5 +1,6 @@
 "use client";
 
+import { Segmented } from "@/components/segmented";
 import { MagnifyingGlass, Pause, Play, Repeat, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
@@ -81,13 +82,7 @@ export function ReaderControls({ surah, ayas }: { surah: number; ayas: number })
           <Play weight="fill" aria-hidden="true" /> {from ? `Reprendre (v. ${from})` : "Écouter la sourate"}
         </button>
       )}
-      <div className="segmented small" aria-label="Vitesse de récitation">
-        {[0.75, 1, 1.25].map((rate) => (
-          <button key={rate} type="button" aria-pressed={state.rate === rate} onClick={() => player.setRate(rate)}>
-            {rate === 1 ? "×1" : `×${rate}`}
-          </button>
-        ))}
-      </div>
+      <Segmented size="sm" label="Vitesse de récitation" value={state.rate} onChange={(rate) => player.setRate(rate)} options={[0.75, 1, 1.25].map((rate) => ({ value: rate, label: rate === 1 ? "×1" : `×${rate}` }))} />
       <span className="faint reader-credit">Mishary al-ʿAfāsī · Ḥafṣ ʿan ʿĀṣim</span>
     </div>
   );

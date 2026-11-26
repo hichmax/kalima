@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BookOpenText, Cards, Fire, Sparkle } from "@phosphor-icons/react";
+import { ArrowRight, BookOpenText, Cards, Fire, Headphones, Sparkle, TextAa } from "@phosphor-icons/react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
@@ -105,17 +105,27 @@ export function Dashboard() {
       </section>
 
       <section className="grid-auto">
-        <Link href="/reviser" className="glass card quick">
+        <Link href="/reviser" className="glass card quick tilt">
           <Cards size={28} weight="duotone" aria-hidden="true" />
           <h3>Réviser</h3>
           <p className="muted">{due ? `${due} cartes t'attendent.` : "Rien d'urgent. Reviens plus tard."}</p>
         </Link>
-        <Link href="/coran" className="glass card quick">
+        <Link href="/coran" className="glass card quick tilt">
           <BookOpenText size={28} weight="duotone" aria-hidden="true" />
           <h3>Lire le Coran</h3>
           <p className="muted">Les 114 sourates, mot à mot, avec la récitation.</p>
         </Link>
-        <Link href="/mots" className="glass card quick">
+        <Link href="/ecouter" className="glass card quick tilt">
+          <Headphones size={28} weight="duotone" aria-hidden="true" />
+          <h3>Écouter et répéter</h3>
+          <p className="muted">Un ou plusieurs versets en boucle, pour mémoriser.</p>
+        </Link>
+        <Link href="/alphabet" className="glass card quick tilt">
+          <TextAa size={28} weight="duotone" aria-hidden="true" />
+          <h3>L&apos;alphabet</h3>
+          <p className="muted">Les 28 lettres : apprendre, quiz, révisions.</p>
+        </Link>
+        <Link href="/mots" className="glass card quick tilt">
           <Sparkle size={28} weight="duotone" aria-hidden="true" />
           <h3>Les 300 mots</h3>
           <p className="muted">Le vocabulaire le plus fréquent, avec sa couverture.</p>

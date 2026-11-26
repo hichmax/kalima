@@ -62,6 +62,7 @@ let state: PlayerState = { src: null, playing: false, loop: false, rate: 1 };
 let audio: HTMLAudioElement | null = null;
 const listeners = new Set<() => void>();
 let onEnded: (() => void) | null = null;
+let cancelPending: (() => void) | null = null;
 
 function setState(patch: Partial<PlayerState>) {
   state = { ...state, ...patch };
@@ -95,7 +96,42 @@ export const player = {
   },
   stop() {
     onEnded = null;
+    cancelPending?.();
     audio?.pause();
+  },
+  /**
+   * Joue une fois et attend la fin (ended = true) ou l'arrêt (ended = false).
+   * Les événements « pause » antérieurs au démarrage de cette piste sont ignorés.
+   */
+  playOnce(src: string, rate?: number): Promise<{ ended: boolean; duration: number }> {
+    cancelPending?.();
+    return new Promise((resolve) => {
+      const el = element();
+      let started = false;
+      const finish = (ended: boolean) => {
+        el.removeEventListener("playing", onPlaying);
+        el.removeEventListener("ended", onEnd);
+        el.removeEventListener("pause", onPause);
+        el.removeEventListener("error", onError);
+        if (cancelPending === cancel) cancelPending = null;
+        resolve({ ended, duration: Number.isFinite(el.duration) ? el.duration : 0 });
+      };
+      const cancel = () => finish(false);
+      const onPlaying = () => {
+        started = true;
+      };
+      const onEnd = () => finish(true);
+      const onPause = () => {
+        if (started && !el.ended) finish(false);
+      };
+      const onError = () => finish(false);
+      cancelPending = cancel;
+      el.addEventListener("playing", onPlaying);
+      el.addEventListener("ended", onEnd);
+      el.addEventListener("pause", onPause);
+      el.addEventListener("error", onError);
+      void player.play(src, { rate });
+    });
   },
   setRate(rate: number) {
     if (audio) audio.playbackRate = rate;

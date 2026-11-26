@@ -21,10 +21,13 @@ export function ExerciseRunner({
   exercises,
   onComplete,
   title,
+  onAdvance,
 }: {
   exercises: Exercise[];
   onComplete: (results: ExerciseResult[]) => void;
   title?: string;
+  /** Appelé à chaque nouvelle question affichée (identifiant de l'exercice). */
+  onAdvance?: (id: string) => void;
 }) {
   const reduce = useReducedMotion();
   const [queue, setQueue] = useState(() => exercises.map((e) => e.id));
@@ -40,7 +43,8 @@ export function ExerciseRunner({
 
   useEffect(() => {
     shownAt.current = performance.now();
-  }, [queue]);
+    if (queue[0]) onAdvance?.(queue[0]);
+  }, [queue, onAdvance]);
 
   const answer = useCallback(
     (index: number) => {

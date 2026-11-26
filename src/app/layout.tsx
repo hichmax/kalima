@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import localFont from "next/font/local";
 import "@/app/globals.css";
 import { appConfig } from "@/config/app";
+import { GlassPointer } from "@/components/glass-pointer";
 
 const geist = Geist({ subsets: ["latin", "latin-ext"], variable: "--font-geist", display: "swap" });
 
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           Aller au contenu
         </a>
         {children}
+        <GlassPointer />
       </body>
     </html>
   );

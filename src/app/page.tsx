@@ -3,6 +3,7 @@ import Link from "next/link";
 import { DesertStage, DesertWindow } from "@/components/desert";
 import { Reveal } from "@/components/reveal";
 import { WEEKS } from "@/content/program";
+import { LogoMark } from "@/components/logo";
 import { QuranText } from "@/components/quran";
 import { lexiconSummary } from "@/lib/learning-data";
 import { resolveRef, surahIndex } from "@/lib/quran-data";
@@ -28,13 +29,14 @@ export default async function Home() {
     <DesertStage>
       <div className="desert-veil" aria-hidden="true" />
       <header className="landing-top container">
-        <Link href="/" className="brand">
-          <span className="brand-mark" lang="ar">كَلِمَة</span>
-          <span>Kalima</span>
+        <Link href="/" className="brand" aria-label="Kalima">
+          <LogoMark size={32} />
+          <span className="brand-word">Kalima</span>
         </Link>
         <nav className="row" style={{ "--gap": "6px" } as React.CSSProperties} aria-label="Navigation">
           <Link href="/programme" className="btn small ghost">Programme</Link>
-          <Link href="/sources" className="btn small ghost">Sources</Link>
+          <Link href="/ecouter" className="btn small ghost">Écouter</Link>
+          <Link href="/alphabet" className="btn small ghost landing-link">Alphabet</Link>
           <Link href="/aujourdhui" className="btn small">Ouvrir l&apos;app</Link>
         </nav>
       </header>
@@ -81,7 +83,7 @@ export default async function Home() {
           </section>
 
           <section className="container bento" aria-label="Kalima en bref">
-            <DesertWindow className="span-4 tall tile-pad tile-ritual">
+            <DesertWindow className="span-4 tall tile-pad tile-ritual tilt">
               <h3 className="eyebrow tile-head">Chaque jour</h3>
               <ul className="ritual">
                 {RITUAL.map(([name, detail, time]) => (
@@ -94,7 +96,7 @@ export default async function Home() {
               </ul>
             </DesertWindow>
 
-            <div className="solid-tile span-4 tile-pad tile-center">
+            <div className="solid-tile span-4 tile-pad tile-center tilt">
               <h3 className="eyebrow tile-head">Le vocabulaire</h3>
               <p className="big-number num">{coverage300.toFixed(0)} %</p>
               <p className="muted center">
@@ -106,13 +108,13 @@ export default async function Home() {
               </p>
             </div>
 
-            <DesertWindow className="span-4 tile-pad tile-center tile-word">
+            <DesertWindow className="span-4 tile-pad tile-center tile-word tilt">
               <h3 className="eyebrow tile-head">Un mot</h3>
               <p className="ar tile-arabic" lang="ar">كَلِمَة</p>
               <p className="center tile-word-fr">kalima · une parole, un mot</p>
             </DesertWindow>
 
-            <div className="solid-tile span-4 tile-pad">
+            <div className="solid-tile span-4 tile-pad tilt">
               <h3 className="eyebrow tile-head">Huit sourates</h3>
               <ul className="surah-cloud" dir="rtl">
                 {surahNames.map((name) => (
@@ -135,7 +137,7 @@ export default async function Home() {
               </ol>
             </div>
 
-            <DesertWindow className="span-4 tile-pad tile-honest">
+            <DesertWindow className="span-4 tile-pad tile-honest tilt">
               <h3 className="eyebrow tile-head">Ce qu&apos;on ne promet pas</h3>
               <p>
                 Une application ne certifie pas une récitation. Fais-toi écouter par une personne qualifiée : Kalima te
@@ -143,7 +145,7 @@ export default async function Home() {
               </p>
             </DesertWindow>
 
-            <div className="solid-tile span-4 tile-pad">
+            <div className="solid-tile span-4 tile-pad tilt">
               <h3 className="eyebrow tile-head">Les sources</h3>
               <ul className="source-list">
                 <li><strong>Texte</strong> Tanzil, Uthmani 1.1</li>

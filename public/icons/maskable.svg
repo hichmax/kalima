@@ -1,7 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Kalima">
-  <rect width="512" height="512" fill="#2C2056"/>
-  <path d="M150 344V238c0-60 50-91 106-129 56 38 106 69 106 129v106" fill="none" stroke="#F1E2C4" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M132 358c51 4 92 16 124 51 32-35 73-47 124-51-6 34-27 52-61 56-26 4-47 10-63 24-16-14-37-20-63-24-34-4-55-22-61-56Z" fill="#F1E2C4"/>
-  <path d="M205 201h41v113h-41V201Zm37 64 62-64h48l-70 71 73 68h-52l-61-61v-14Z" fill="#F1E2C4"/>
-  <path d="m256 144 18 18-18 18-18-18 18-18Z" fill="#C79A3B"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#140d2b"/>
+      <stop offset="0.7" stop-color="#2c1a57"/>
+      <stop offset="1" stop-color="#5a2f6e"/>
+    </linearGradient>
+    <linearGradient id="dune" x1="53" y1="150" x2="470" y2="362" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f4e6cf"/>
+      <stop offset="0.55" stop-color="#e9a3c9"/>
+      <stop offset="1" stop-color="#8d74ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#sky)"/>
+  <g transform="translate(51.2 54.4) scale(0.8)">
+    <path d="M53 187c13 102 83 156 207 156 122 0 188-57 198-177" fill="none" stroke="url(#dune)" stroke-width="44" stroke-linecap="round"/>
+    <path d="M458 166c1-26-3-49-14-70" fill="none" stroke="#8d74ff" stroke-width="44" stroke-linecap="round"/>
+    <path d="M256 372l11 31 31 11-31 11-11 31-11-31-31-11 31-11z" fill="#fff"/>
+  </g>
 </svg>

@@ -314,6 +314,15 @@ p {
   background: var(--glass-bg), var(--glass-solid);
   border: 1px solid var(--glass-border);
   box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+}
+
+/* Le flou d'arrière-plan coûte cher au défilement : on le réserve aux surfaces qui flottent
+   au-dessus du contenu (barres, feuilles, cartes principales). Les autres gardent le reflet. */
+.glass.float,
+.topbar-inner,
+.tabbar,
+.word-sheet,
+.reader-controls {
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(165%);
   backdrop-filter: blur(var(--glass-blur)) saturate(165%);
 }
@@ -366,8 +375,6 @@ html[data-theme="papier"] .glass::before {
   font-weight: 600;
   letter-spacing: -0.005em;
   box-shadow: inset 0 1px 0 var(--glass-highlight);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  backdrop-filter: blur(16px) saturate(160%);
   transition: transform 120ms ease-out, background-color 160ms ease, box-shadow 160ms ease;
   user-select: none;
 }
@@ -515,7 +522,6 @@ html[data-theme="papier"] .btn.primary {
     linear-gradient(180deg, rgba(7, 6, 12, 0.35), rgba(7, 6, 12, 0.92) 70%),
     url("/media/desert-poster.webp") center 30% / cover no-repeat,
     var(--bg);
-  filter: saturate(110%);
 }
 
 html[data-theme="papier"] .app-backdrop {
@@ -1173,7 +1179,7 @@ html[data-theme="papier"] .option {
   align-items: end;
   padding: clamp(22px, 4vw, 40px);
   border-radius: var(--radius-xl);
-  background: #0e3a3c;
+  background: #140d2b;
 }
 
 .day-hero::before {
@@ -1349,8 +1355,10 @@ html[data-theme="papier"] .option {
 }
 
 .part .ar {
+  display: block;
+  padding: 2px 4px 6px;
   font-size: 1.7rem;
-  line-height: 1.5;
+  line-height: 2.1;
   color: var(--sand);
 }
 
@@ -1570,7 +1578,7 @@ html[data-theme="papier"] .option {
 
 .tile-arabic {
   font-size: clamp(4.4rem, 9vw, 6.6rem);
-  line-height: 1.5;
+  line-height: 1.9;
   color: #f1e2c4;
   text-shadow: 0 10px 40px rgba(155, 135, 255, 0.45);
 }
@@ -1700,7 +1708,7 @@ html[data-theme="papier"] .option {
   display: grid;
   align-items: end;
   border-radius: var(--radius-xl);
-  background: #0e3a3c;
+  background: #140d2b;
 }
 
 .today::before {
@@ -1977,7 +1985,8 @@ html[data-theme="papier"] .option {
 
 .surah-title-ar {
   font-size: calc(3rem * var(--arabic-scale));
-  line-height: 1.5;
+  line-height: 2;
+  margin-bottom: 4px;
   color: var(--sand);
 }
 
@@ -2207,4 +2216,813 @@ input[type="range"] {
   border-color: var(--violet);
   background: color-mix(in srgb, var(--violet) 24%, transparent);
   color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- transitions de page */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(.page-exit) {
+  animation: page-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(.page-enter) {
+  animation: page-in 420ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+    filter: blur(6px);
+    scale: 0.985;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    translate: 0 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(.page-exit),
+  ::view-transition-new(.page-enter) {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- logo et menu */
+.brand-word {
+  font-weight: 680;
+  letter-spacing: -0.025em;
+}
+
+.menu-btn {
+  min-height: 40px;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(7, 6, 12, 0.45);
+}
+
+.menu-sheet {
+  position: fixed;
+  top: 76px;
+  right: max(16px, calc((100vw - 1180px) / 2));
+  z-index: 80;
+  display: grid;
+  gap: 8px;
+  width: min(380px, calc(100vw - 32px));
+  padding: 14px;
+  transform-origin: top right;
+  --glass-blur: 30px;
+}
+
+.menu-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 18px;
+  transition: background-color 140ms ease;
+}
+
+.menu-item:hover,
+.menu-item[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.menu-item svg {
+  flex: none;
+  color: var(--violet);
+}
+
+.menu-item > span {
+  display: grid;
+}
+
+.landing-top .landing-link,
+.landing-top .btn.ghost {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .landing-top .landing-link,
+  .landing-top .btn.ghost {
+    display: inline-flex;
+  }
+}
+
+/* ==========================================================================
+   Liquid glass, accentué
+   - liseré en dégradé (la lumière accroche le bord haut-gauche, rebond en bas-droite)
+   - reflet spéculaire + lueur intérieure + ombres en couches
+   - flou + saturation sur toutes les vignettes (plus léger pour les listes)
+   ========================================================================== */
+:root {
+  --lg-tint: rgba(24, 18, 44, 0.42);
+  --lg-fill: linear-gradient(165deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.06) 38%, rgba(255, 255, 255, 0.03) 70%, rgba(255, 255, 255, 0.07) 100%);
+  --lg-rim: linear-gradient(140deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.16) 22%, rgba(255, 255, 255, 0.04) 50%, rgba(255, 255, 255, 0.1) 78%, rgba(255, 255, 255, 0.42) 100%);
+  --lg-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.1),
+    inset 0 0 30px rgba(255, 255, 255, 0.05),
+    inset 0 10px 24px -14px rgba(255, 255, 255, 0.22),
+    0 30px 60px -24px rgba(0, 0, 0, 0.65),
+    0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+html[data-theme="papier"] {
+  --lg-tint: rgba(255, 255, 255, 0.55);
+  --lg-fill: linear-gradient(165deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.55));
+  --lg-rim: linear-gradient(140deg, rgba(255, 255, 255, 1), rgba(27, 22, 40, 0.08) 40%, rgba(27, 22, 40, 0.04) 70%, rgba(255, 255, 255, 0.9));
+  --lg-shadow: inset 0 1px 1px #fff, 0 20px 50px -20px rgba(60, 44, 20, 0.25), 0 4px 12px rgba(60, 44, 20, 0.08);
+}
+
+.glass,
+.btn,
+.option,
+.segmented,
+.steps,
+.chip,
+.syllable,
+.letter-tile,
+.abc-tile,
+.word-chip,
+.part,
+.weeks li,
+.tip,
+.review-banner {
+  border: 1px solid transparent;
+  background:
+    var(--lg-fill) padding-box,
+    linear-gradient(var(--lg-tint), var(--lg-tint)) padding-box,
+    var(--lg-rim) border-box;
+  box-shadow: var(--lg-shadow);
+}
+
+.glass {
+  -webkit-backdrop-filter: blur(24px) saturate(185%) brightness(1.06);
+  backdrop-filter: blur(24px) saturate(185%) brightness(1.06);
+}
+
+.glass.thin {
+  -webkit-backdrop-filter: blur(12px) saturate(170%);
+  backdrop-filter: blur(12px) saturate(170%);
+}
+
+.btn,
+.segmented,
+.option {
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  backdrop-filter: blur(14px) saturate(180%);
+}
+
+/* Reflet spéculaire : une tache de lumière en haut à gauche, une lueur colorée en bas. */
+.glass::before {
+  background:
+    radial-gradient(90% 55% at 14% -6%, rgba(255, 255, 255, 0.24), transparent 58%),
+    radial-gradient(60% 40% at 92% 112%, color-mix(in srgb, var(--dawn) 22%, transparent), transparent 65%),
+    radial-gradient(70% 50% at 100% 0%, color-mix(in srgb, var(--violet) 14%, transparent), transparent 60%);
+}
+
+/* Ligne de lumière sur l'arête supérieure. */
+.glass::after {
+  content: "";
+  position: absolute;
+  inset: 0 12% auto;
+  height: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  opacity: 0.55;
+}
+
+.btn.primary {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(180deg, #ffffff, #e4dbff) padding-box,
+    linear-gradient(140deg, #ffffff, rgba(155, 135, 255, 0.6)) border-box;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -6px 14px rgba(155, 135, 255, 0.28),
+    0 12px 32px color-mix(in srgb, var(--violet) 45%, transparent);
+}
+
+html[data-theme="papier"] .btn.primary {
+  background: linear-gradient(180deg, #2a2145, #18122b) padding-box, linear-gradient(140deg, #5a45c7, #18122b) border-box;
+}
+
+.btn.ghost {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.btn.dashed {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--line-strong);
+  box-shadow: none;
+}
+
+.option[data-state="correct"] {
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--oasis) 30%, transparent), color-mix(in srgb, var(--oasis) 12%, transparent)) padding-box,
+    linear-gradient(140deg, color-mix(in srgb, var(--oasis) 90%, white), color-mix(in srgb, var(--oasis) 30%, transparent)) border-box;
+}
+
+.option[data-state="wrong"] {
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--danger) 26%, transparent), color-mix(in srgb, var(--danger) 10%, transparent)) padding-box,
+    linear-gradient(140deg, color-mix(in srgb, var(--danger) 90%, white), color-mix(in srgb, var(--danger) 30%, transparent)) border-box;
+}
+
+.step-dot.done,
+.week-day[data-state="done"] {
+  background: linear-gradient(180deg, #7ff0e3, var(--oasis));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 4px 14px color-mix(in srgb, var(--oasis) 40%, transparent);
+}
+
+/* Fond d'application plus vivant : le désert violet et deux halos, pour que le verre réfracte. */
+.app-backdrop {
+  background:
+    radial-gradient(55% 40% at 85% 8%, rgba(155, 135, 255, 0.35), transparent 70%),
+    radial-gradient(50% 35% at 8% 62%, rgba(240, 169, 200, 0.22), transparent 70%),
+    linear-gradient(180deg, rgba(7, 6, 12, 0.15), rgba(7, 6, 12, 0.55) 55%, rgba(7, 6, 12, 0.85)),
+    url("/media/desert-poster.webp") center 25% / cover no-repeat,
+    var(--bg);
+}
+
+html[data-theme="papier"] .app-backdrop {
+  background:
+    radial-gradient(55% 40% at 85% 8%, rgba(155, 135, 255, 0.22), transparent 70%),
+    radial-gradient(50% 35% at 8% 62%, rgba(240, 169, 200, 0.2), transparent 70%),
+    var(--bg);
+}
+
+/* Les tuiles pleines de l'accueil deviennent du verre sombre posé sur la nuit. */
+.solid-tile {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02) 45%) padding-box,
+    linear-gradient(#141220, #141220) padding-box,
+    var(--lg-rim) border-box;
+  box-shadow: var(--lg-shadow);
+}
+
+.window::after {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 1px 1px rgba(255, 255, 255, 0.45),
+    inset 0 0 40px rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .btn,
+  .option,
+  .segmented {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--bg-elevated);
+  }
+}
+
+/* ---------------------------------------------------------------- aberration chromatique
+   Comme une lentille épaisse : les bords décomposent la lumière (rose/rouge d'un côté,
+   cyan/bleu de l'autre), le filet de lumière supérieur est irisé. */
+:root {
+  --lg-rim: linear-gradient(
+    140deg,
+    rgba(255, 214, 236, 0.85) 0%,
+    rgba(255, 255, 255, 0.5) 10%,
+    rgba(255, 255, 255, 0.1) 30%,
+    rgba(255, 255, 255, 0.03) 55%,
+    rgba(160, 230, 255, 0.18) 80%,
+    rgba(150, 220, 255, 0.6) 100%
+  );
+  --lg-shadow:
+    inset 1.5px 0 0 -0.5px rgba(255, 90, 160, 0.28),
+    inset -1.5px 0 0 -0.5px rgba(80, 210, 255, 0.3),
+    inset 0 1.5px 0 -0.5px rgba(255, 255, 255, 0.55),
+    inset 0 -1.5px 0 -0.5px rgba(140, 120, 255, 0.25),
+    inset 0 0 30px rgba(255, 255, 255, 0.05),
+    inset 0 12px 26px -16px rgba(255, 255, 255, 0.24),
+    0 30px 60px -24px rgba(0, 0, 0, 0.65),
+    0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.glass::after {
+  height: 1.5px;
+  opacity: 0.75;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 120, 190, 0.7) 18%, #ffffff 50%, rgba(110, 220, 255, 0.75) 82%, transparent 100%);
+  filter: blur(0.3px);
+}
+
+/* Les bulles d'option : frange colorée au survol, comme le verre qui bouge sous la lumière. */
+.option:hover:not(:disabled),
+.btn:hover:not(.ghost):not(.primary) {
+  box-shadow:
+    inset 2px 0 0 -0.5px rgba(255, 90, 160, 0.42),
+    inset -2px 0 0 -0.5px rgba(80, 210, 255, 0.45),
+    inset 0 1.5px 0 -0.5px rgba(255, 255, 255, 0.7),
+    0 14px 30px -12px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="papier"] {
+  --lg-shadow:
+    inset 1px 0 0 rgba(255, 90, 160, 0.18),
+    inset -1px 0 0 rgba(60, 180, 255, 0.2),
+    inset 0 1px 1px #fff,
+    0 20px 50px -20px rgba(60, 44, 20, 0.25),
+    0 4px 12px rgba(60, 44, 20, 0.08);
+}
+
+/* Les cartes à dégradé (séance du jour) gardent leur voile sombre sous le texte. */
+.day-hero::before,
+.today::before {
+  z-index: 0;
+  background: linear-gradient(200deg, rgba(7, 6, 12, 0) 35%, rgba(7, 6, 12, 0.6));
+}
+
+/* ---------------------------------------------------------------- écouter */
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field select,
+.field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+}
+
+.field select option {
+  background: #1a1530;
+  color: #f3effa;
+}
+
+.range-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stepper-box {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 6px;
+}
+
+.stepper-box input {
+  min-width: 0;
+  padding: 0 4px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+
+.stepper-box input::-webkit-outer-spin-button,
+.stepper-box input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.stepper-box .btn.icon {
+  width: 40px;
+  min-height: 40px;
+  font-size: 1.2rem;
+}
+
+.choice {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.play-main {
+  min-height: 56px;
+  padding: 0 1.4em;
+  font-size: 1.02rem;
+}
+
+/* ---------------------------------------------------------------- alphabet */
+.abc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px;
+}
+
+.abc-tile {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 112px;
+  padding: 8px 6px 14px;
+  border-radius: 22px;
+  -webkit-backdrop-filter: blur(12px) saturate(170%);
+  backdrop-filter: blur(12px) saturate(170%);
+}
+
+.abc-tile[data-heavy]::after {
+  content: "";
+  position: absolute;
+  inset: auto 32% 7px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--dawn);
+  opacity: 0.85;
+}
+
+.abc-tile[data-known] .abc-name {
+  color: var(--oasis);
+}
+
+.abc-glyph {
+  display: block;
+  font-size: calc(2.6rem * var(--arabic-scale));
+  line-height: 1.75;
+  color: var(--sand);
+}
+
+.abc-name {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.quiz-card {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.quiz-card svg {
+  color: var(--violet);
+}
+
+.quiz-card:disabled {
+  opacity: 0.5;
+}
+
+.due-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.due-list li {
+  display: grid;
+  justify-items: center;
+  min-width: 64px;
+  padding: 4px 8px 6px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+}
+
+.due-list .ar {
+  font-size: 1.6rem;
+  line-height: 1.8;
+  color: var(--sand);
+}
+
+.letter-sheet {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 80;
+  width: min(520px, calc(100% - 24px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: 20px;
+  translate: -50% -50%;
+  --glass-blur: 30px;
+}
+
+.letter-hero {
+  font-size: calc(5.6rem * var(--arabic-scale));
+  line-height: 1.7;
+  text-align: center;
+  color: var(--sand);
+  text-shadow: 0 10px 40px rgba(155, 135, 255, 0.45);
+}
+
+.forms-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.form-cell {
+  display: grid;
+  justify-items: center;
+  padding: 4px 4px 8px;
+  border-radius: 16px;
+}
+
+.form-cell .ar {
+  font-size: calc(2.1rem * var(--arabic-scale));
+  line-height: 1.9;
+  color: var(--sand);
+}
+
+/* ==========================================================================
+   Finitions (audit UX)
+   ========================================================================== */
+
+/* Contrôle segmenté : une ligne, défilement horizontal si besoin, pastille qui glisse. */
+.segmented.seg {
+  display: flex;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  justify-self: start;
+}
+
+.segmented.seg::-webkit-scrollbar {
+  display: none;
+}
+
+.segmented.seg button {
+  flex: none;
+  white-space: nowrap;
+  z-index: 0;
+  transition: color 160ms ease;
+}
+
+.segmented.seg button.is-active {
+  color: var(--ink);
+}
+
+.seg-pill {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1)) padding-box,
+    linear-gradient(140deg, rgba(255, 220, 240, 0.8), rgba(255, 255, 255, 0.15) 45%, rgba(150, 220, 255, 0.6)) border-box;
+  box-shadow:
+    inset 1px 0 0 rgba(255, 90, 160, 0.25),
+    inset -1px 0 0 rgba(80, 210, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme="papier"] .seg-pill {
+  background: linear-gradient(180deg, #ffffff, #f1ecff) padding-box, linear-gradient(140deg, #fff, rgba(90, 69, 199, 0.4)) border-box;
+}
+
+.seg-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Le texte reste dans ses bulles. */
+.glass,
+.option,
+.part,
+.form-cell,
+.letter-tile,
+.abc-tile,
+.lemma-card,
+.stat,
+.quick,
+.quiz-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.option {
+  text-wrap: balance;
+  line-height: 1.35;
+}
+
+.chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+h1,
+h2,
+h3,
+.lead {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* L'arabe ne supporte aucun espacement de lettres : sinon les lettres se détachent ou se chevauchent. */
+.ar,
+.quran,
+[lang="ar"],
+[lang="ar"] * {
+  letter-spacing: 0 !important;
+  font-feature-settings: normal;
+}
+
+.quran {
+  word-spacing: 0.14em;
+}
+
+/* Alignements : contenus centrés dans les vignettes centrées. */
+.abc-tile,
+.letter-tile,
+.form-cell,
+.part,
+.lemma-card .lemma-fr,
+.stat {
+  text-align: center;
+}
+
+.stat {
+  justify-items: center;
+}
+
+.lemma-card {
+  justify-items: center;
+}
+
+.lemma-card .row {
+  width: 100%;
+}
+
+.exercise-prompt {
+  text-align: center;
+}
+
+.exercise-card .chip {
+  justify-self: center;
+}
+
+/* Cartes qui suivent la souris : légère inclinaison et reflet qui glisse. */
+.tilt {
+  transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+  transform-style: preserve-3d;
+  transition:
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 300ms ease;
+  will-change: transform;
+}
+
+.tilt.is-tilting {
+  transition:
+    transform 90ms linear,
+    box-shadow 300ms ease;
+}
+
+.tilt.is-tilting::before {
+  background:
+    radial-gradient(42% 38% at var(--mx, 20%) var(--my, 0%), rgba(255, 255, 255, 0.26), transparent 70%),
+    radial-gradient(60% 40% at 92% 112%, color-mix(in srgb, var(--dawn) 22%, transparent), transparent 65%);
+}
+
+.window.tilt::before,
+.solid-tile.tilt::before,
+.abc-tile.tilt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  background: radial-gradient(45% 40% at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.16), transparent 70%);
+}
+
+.window.tilt.is-tilting::before,
+.solid-tile.tilt.is-tilting::before,
+.abc-tile.tilt.is-tilting::before {
+  opacity: 1;
+}
+
+.solid-tile.tilt,
+.abc-tile.tilt {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tilt {
+    transform: none !important;
+  }
+}
+
+/* Changement de filtre : la grille se renouvelle en fondu. */
+.fade-swap {
+  animation: fade-swap 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fade-swap {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+/* Lettres à longue descente (ح ج خ ع غ ي) : on laisse de la place sous le glyphe. */
+.abc-glyph,
+.letter-glyph {
+  line-height: 2.05;
+  padding-bottom: 0.08em;
+}
+
+.abc-tile {
+  min-height: 124px;
+  padding-bottom: 16px;
+}
+
+.letter-tile {
+  padding-bottom: 16px;
+}
+
+/* Mobile : les segments tiennent dans la largeur, les boutons restent sur une ligne. */
+.segmented.seg button {
+  padding: 0 13px;
+}
+
+@media (max-width: 480px) {
+  .segmented.seg button {
+    padding: 0 10px;
+    font-size: 0.85rem;
+  }
+}
+
+.play-main {
+  flex: 1;
+  max-width: 320px;
+  white-space: nowrap;
+}
+
+.btn {
+  white-space: nowrap;
+}
+
+.lemma-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+}
+
+@media (max-width: 480px) {
+  .lemma-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lemma-card {
+    padding: 12px 10px;
+  }
+
+  .lemma-ar {
+    font-size: calc(1.9rem * var(--arabic-scale));
+  }
+
+  .lemma-fr {
+    font-size: 0.92rem;
+  }
 }

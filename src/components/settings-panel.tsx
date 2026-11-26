@@ -1,5 +1,6 @@
 "use client";
 
+import { Segmented } from "@/components/segmented";
 import { DownloadSimple, UploadSimple } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import { QuranText } from "@/components/quran";
@@ -93,10 +94,7 @@ export function SettingsPanel({ preview }: { preview: QuranWord[] }) {
 
       <section className="glass card stack" style={{ "--gap": "12px" } as React.CSSProperties}>
         <h2 className="h3">Apparence</h2>
-        <div className="segmented">
-          <button type="button" aria-pressed={settings.theme === "nuit"} onClick={() => set({ theme: "nuit" })}>Nuit</button>
-          <button type="button" aria-pressed={settings.theme === "papier"} onClick={() => set({ theme: "papier" })}>Papier</button>
-        </div>
+        <Segmented label="Thème" value={settings.theme} onChange={(theme) => set({ theme })} options={[{ value: "nuit", label: "Nuit" }, { value: "papier", label: "Papier" }]} />
         <p className="faint">Les animations suivent le réglage « réduire les animations » de ton appareil.</p>
       </section>
 

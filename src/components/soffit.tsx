@@ -7,14 +7,15 @@ import { useEffect, useRef } from "react";
  * Toute la transformation a lieu dans le shader ; le CPU ne fait que suivre le pointeur
  * (deux ressorts, 0.105 puis 0.043) et téléverser deux uniformes par image.
  * La palette vit dans CONFIG uniquement : ne jamais modifier le GLSL pour recolorer.
- * Paramètres fournis pour Kalima (palette « oasis »).
+ * Palette « crépuscule » : les violets et le rose d'horizon du thème Kalima (seules les couleurs
+ * de CONFIG ont changé par rapport aux paramètres fournis).
  */
 const CONFIG = {
-  bgColor: "#0e3a3c",
-  colorA: "#3fc8c0",
-  colorB: "#32d67c",
-  colorC: "#c8e0d0",
-  colorD: "#929292",
+  bgColor: "#140d2b",
+  colorA: "#4b2fb0",
+  colorB: "#8d74ff",
+  colorC: "#e9a3c9",
+  colorD: "#f4e6cf",
   scale: 0.4,
   speed: 0.235,
   tilt: 2.96,

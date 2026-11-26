@@ -1,7 +1,9 @@
 "use client";
 
+import { Segmented } from "@/components/segmented";
 import { Microphone, Repeat, Stop, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Phonetic, PlayButton, QuranText } from "@/components/quran";
 import type { StudyVerse } from "@/lib/learning-data";
@@ -72,14 +74,13 @@ export function MemorizeStep({
 
   return (
     <section className="stack" style={{ "--gap": "16px" } as React.CSSProperties}>
-      <div className="segmented" role="tablist" aria-label="Étapes de mémorisation">
-        {STAGES.map((s, i) => (
-          <button key={s.id} type="button" role="tab" aria-selected={stage === s.id} onClick={() => goStage(s.id)}>
-            {stage === s.id ? <motion.span layoutId="memo-stage" className="nav-pill" transition={spring} /> : null}
-            <span className="num">{i + 1}</span> {s.label}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        role="tablist"
+        label="Étapes de mémorisation"
+        value={stage}
+        onChange={goStage}
+        options={STAGES.map((s, i) => ({ value: s.id, label: <><span className="num">{i + 1}</span> {s.label}</> }))}
+      />
       <p className="muted">{STAGES.find((s) => s.id === stage)?.hint}</p>
 
       {audioAvailable === false ? (
@@ -94,13 +95,7 @@ export function MemorizeStep({
           <button type="button" className="btn" onClick={() => playAll(0)}>
             Écouter tout, dans l&apos;ordre
           </button>
-          <div className="segmented small" aria-label="Vitesse">
-            {[0.75, 1].map((rate) => (
-              <button key={rate} type="button" aria-pressed={playerState.rate === rate} onClick={() => player.setRate(rate)}>
-                {rate === 1 ? "Normal" : "Lent"}
-              </button>
-            ))}
-          </div>
+          <Segmented size="sm" label="Vitesse" value={playerState.rate} onChange={(rate) => player.setRate(rate)} options={[{ value: 0.75, label: "Lent" }, { value: 1, label: "Normal" }]} />
         </div>
       ) : null}
 
@@ -199,19 +194,16 @@ export function MemorizeStep({
 
       {stage === "masquer" ? (
         <div className="row">
-          <div className="segmented" aria-label="Niveau de masquage">
-            {(
-              [
-                ["none", "Tout voir"],
-                ["hint", "Premières lettres"],
-                ["all", "Rien"],
-              ] as const
-            ).map(([value, label]) => (
-              <button key={value} type="button" aria-pressed={mask === value} onClick={() => setMask(value)}>
-                {label}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label="Niveau de masquage"
+            value={mask}
+            onChange={setMask}
+            options={[
+              { value: "none", label: "Tout voir" },
+              { value: "hint", label: "Premières lettres" },
+              { value: "all", label: "Rien" },
+            ]}
+          />
           <Recorder />
         </div>
       ) : null}
@@ -231,6 +223,12 @@ export function MemorizeStep({
           </button>
         )}
       </div>
+      <Link
+        className="btn dashed"
+        href={`/ecouter?s=${verses[0]?.s ?? 1}&from=${verses[0]?.v ?? 1}&to=${verses.filter((v) => v.s === verses[0]?.s).at(-1)?.v ?? 1}`}
+      >
+        <Repeat aria-hidden="true" /> Répéter ces versets en boucle dans le lecteur
+      </Link>
       <p className="faint">
         Récitation : Mishary Rāshid al-ʿAfāsī (Ḥafṣ ʿan ʿĀṣim), via Quran.Foundation. Texte : Tanzil.
       </p>
