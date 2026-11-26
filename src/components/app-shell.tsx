@@ -1,101 +1,78 @@
 "use client";
 
-import {
-  BookOpenText,
-  CardsThree,
-  ChartDonut,
-  Books,
-  FolderSimple,
-  House,
-  Path,
-  ShieldCheck,
-  Target,
-} from "@phosphor-icons/react";
+import { BookOpenText, CalendarDots, Cards, GearSix, SunHorizon, TextAa } from "@phosphor-icons/react";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Logo } from "@/components/logo";
-import { ThemeToggle } from "@/components/theme-toggle";
+import type { ReactNode } from "react";
 
-const desktopNav = [
-  { label: "Accueil", href: "/dashboard", icon: House },
-  { label: "Défi de 5 mots", href: "/defi", icon: Target },
-  { label: "Coran", href: "/coran", icon: BookOpenText },
-  { label: "Apprendre", href: "/apprendre", icon: Path },
-  { label: "Réviser", href: "/reviser", icon: CardsThree },
-  { label: "Mes listes", href: "/listes", icon: FolderSimple },
-  { label: "Vocabulaire", href: "/vocabulaire", icon: Books },
-  { label: "Progression", href: "/progression", icon: ChartDonut },
+const NAV = [
+  { href: "/aujourdhui", label: "Aujourd'hui", icon: SunHorizon },
+  { href: "/programme", label: "Programme", icon: CalendarDots },
+  { href: "/coran", label: "Coran", icon: BookOpenText },
+  { href: "/reviser", label: "Réviser", icon: Cards },
+  { href: "/mots", label: "Mots", icon: TextAa },
 ] as const;
 
-const mobileNav = [
-  { label: "Accueil", href: "/dashboard", icon: House },
-  { label: "Apprendre", href: "/apprendre", icon: Path },
-  { label: "Coran", href: "/coran", icon: BookOpenText },
-  { label: "Réviser", href: "/reviser", icon: CardsThree },
-  { label: "Listes", href: "/listes", icon: FolderSimple },
+const DESKTOP_EXTRA = [
+  { href: "/lecons", label: "Leçons" },
+  { href: "/sources", label: "Sources" },
 ] as const;
 
-const isCurrent = (pathname: string, href: string) =>
-  pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
+const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const reduce = useReducedMotion();
+  const spring = reduce ? { duration: 0 } : { type: "spring" as const, bounce: 0, duration: 0.35 };
 
   return (
-    <div className="app-shell">
-      <aside className="app-sidebar">
-        <Logo href="/dashboard" />
-        <nav className="app-nav" aria-label="Espace d’apprentissage">
-          {desktopNav.map((item) => {
-            const Icon = item.icon;
+    <>
+      <div className="app-backdrop" aria-hidden="true" />
+      <header className="topbar">
+        <div className="container">
+          <div className="topbar-inner glass thin">
+            <Link href="/aujourdhui" className="brand" aria-label="Kalima, accueil de l'application">
+              <span className="brand-mark" lang="ar">كَلِمَة</span>
+              <span>Kalima</span>
+            </Link>
+            <LayoutGroup id="desktop-nav">
+              <nav className="desktop-nav" aria-label="Navigation principale">
+                {[...NAV, ...DESKTOP_EXTRA].map((item) => {
+                  const active = isActive(pathname, item.href);
+                  return (
+                    <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}>
+                      {active && <motion.span layoutId="nav-pill" className="nav-pill" transition={spring} />}
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </LayoutGroup>
+            <Link href="/reglages" className="btn icon ghost" aria-label="Réglages">
+              <GearSix size={22} weight="duotone" />
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <div id="contenu">{children}</div>
+
+      <div className="scroll-edge" aria-hidden="true" />
+      <LayoutGroup id="tabbar">
+        <nav className="tabbar glass" aria-label="Navigation">
+          {NAV.map(({ href, label, icon: Icon }) => {
+            const active = isActive(pathname, href);
             return (
-              <Link
-                className="app-nav-link"
-                href={item.href}
-                key={item.href}
-                aria-current={isCurrent(pathname, item.href) ? "page" : undefined}
-              >
-                <Icon size={20} aria-hidden="true" />
-                {item.label}
+              <Link key={href} href={href} aria-current={active ? "page" : undefined}>
+                {active && <motion.span layoutId="tab-pill" className="nav-pill" transition={spring} />}
+                <Icon weight={active ? "fill" : "regular"} aria-hidden="true" />
+                <span>{label}</span>
               </Link>
             );
           })}
         </nav>
-        <div className="sidebar-spacer" />
-        <div className="soft-card stack" style={{ gap: 10 }}>
-          <span className="cluster">
-            <span className="status-dot" />
-            <strong style={{ fontSize: ".8rem" }}>Mode local actif</strong>
-          </span>
-          <span className="muted" style={{ fontSize: ".72rem", lineHeight: 1.5 }}>
-            Ta progression reste sur cet appareil et pourra être synchronisée après connexion.
-          </span>
-        </div>
-        <div className="row" style={{ justifyContent: "space-between", marginTop: 16 }}>
-          <Link className="btn btn-ghost btn-icon" href="/admin/validation" aria-label="Espace de validation">
-            <ShieldCheck size={21} />
-          </Link>
-          <ThemeToggle />
-        </div>
-      </aside>
-      <main className="app-main" id="main-content">
-        <div className="app-content">{children}</div>
-      </main>
-      <nav className="mobile-nav" aria-label="Navigation mobile">
-        {mobileNav.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              href={item.href}
-              key={item.href}
-              aria-current={isCurrent(pathname, item.href) ? "page" : undefined}
-            >
-              <Icon size={21} aria-hidden="true" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </div>
+      </LayoutGroup>
+    </>
   );
 }

@@ -1,212 +1,183 @@
-import {
-  ArrowRight,
-  BookOpenText,
-  CheckCircle,
-  Headphones,
-  ShieldCheck,
-  Sparkle,
-} from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import { AyahCard } from "@/components/ayah-card";
-import { PublicFooter } from "@/components/public-footer";
-import { PublicHeader } from "@/components/public-header";
-import { featuredAyah } from "@/data/quran-fixtures";
+import { DesertStage, DesertWindow } from "@/components/desert";
+import { Reveal } from "@/components/reveal";
+import { WEEKS } from "@/content/program";
+import { QuranText } from "@/components/quran";
+import { lexiconSummary } from "@/lib/learning-data";
+import { resolveRef, surahIndex } from "@/lib/quran-data";
+import lexiconStats from "@/generated/lexicon-stats.json";
 
-export default function LandingPage() {
+const coverage300 = lexiconStats.lemmas.find((l) => l.rank === 300)?.coverage ?? 74;
+
+const RITUAL = [
+  ["Réviser", "les cartes du jour (FSRS)", "5 min"],
+  ["Apprendre", "une leçon, 15 à 30 questions", "10 min"],
+  ["Mémoriser", "écouter, répéter, réciter", "15 min"],
+  ["Comprendre", "10 mots fréquents", "5 min"],
+  ["Défi", "5 questions express", "2 min"],
+] as const;
+
+const CORE_SURAHS = [1, 112, 113, 114, 108, 103, 110, 106];
+
+export default async function Home() {
+  // Texte coranique toujours issu de Tanzil, jamais saisi à la main.
+  const basmala = await resolveRef("1:1:1-2");
+  const surahNames = CORE_SURAHS.map((n) => surahIndex[n - 1].ar);
   return (
-    <>
-      <PublicHeader />
-      <main id="main-content">
-        <section className="hero">
-          <div className="container hero-grid">
-            <div className="hero-copy">
-              <p className="eyebrow">Lire · prononcer · mémoriser</p>
-              <h1 className="display">
-                Kalima, apprends l’arabe du Coran mot après mot.
-              </h1>
-              <p className="lead">
-                Un rituel simple de 5 mots par jour : découvre leur sens,
-                écoute leur prononciation, retrouve-les dans le Coran et avance
-                sans jargon ni pression.
-              </p>
-              <div className="hero-actions">
-                <Link className="btn btn-primary" href="/onboarding">
-                  Apprendre mes 5 premiers mots <ArrowRight size={18} />
-                </Link>
-                <Link className="btn btn-secondary" href="/coran">
-                  Découvrir le lecteur
-                </Link>
-              </div>
-              <p className="hero-note">
-                <CheckCircle size={17} />
-                Sans compte · gratuit · progression conservée sur l’appareil
-              </p>
-            </div>
-            <div className="hero-study-card">
-              <AyahCard ayah={featuredAyah} preview />
-              <div className="floating-word" aria-label="Aperçu d’une fiche de mot">
-                <div className="row" style={{ justifyContent: "space-between" }}>
-                  <span className="quran-text" lang="ar" dir="rtl">رَحْمَٰن</span>
-                  <Headphones size={18} aria-hidden="true" />
-                </div>
-                <p><strong>Le Tout Miséricordieux</strong></p>
-                <p className="muted" style={{ fontSize: ".76rem" }}>
-                  Phonétique : ar-Raḥmān
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+    <DesertStage>
+      <div className="desert-veil" aria-hidden="true" />
+      <header className="landing-top container">
+        <Link href="/" className="brand">
+          <span className="brand-mark" lang="ar">كَلِمَة</span>
+          <span>Kalima</span>
+        </Link>
+        <nav className="row" style={{ "--gap": "6px" } as React.CSSProperties} aria-label="Navigation">
+          <Link href="/programme" className="btn small ghost">Programme</Link>
+          <Link href="/sources" className="btn small ghost">Sources</Link>
+          <Link href="/aujourdhui" className="btn small">Ouvrir l&apos;app</Link>
+        </nav>
+      </header>
 
-        <div className="trust-strip">
-          <div className="container trust-strip-inner">
-            <span className="trust-item"><BookOpenText size={18} /> Texte canonique séparé</span>
-            <span className="trust-item"><ShieldCheck size={18} /> Provenance visible</span>
-            <span className="trust-item"><Sparkle size={18} /> Pédagogie progressive</span>
-            <span className="trust-item"><Headphones size={18} /> Écoute et répétition</span>
-          </div>
-        </div>
-
-        <section className="landing-section" id="methode">
-          <div className="container">
-            <div className="landing-section-head">
-              <p className="eyebrow">Une méthode douce et structurée</p>
-              <h2 className="section-title">
-                Chaque rencontre avec un verset devient une petite victoire.
-              </h2>
-              <p className="lead">
-                Tu lis d’abord avec calme. Quand tu le souhaites, tu ouvres
-                l’étude, découvres les mots, puis les retrouves au bon moment.
-              </p>
-            </div>
-            <div className="method-rail">
-              {[
-                ["01", "Découvrir", "Chaque jour, cinq mots fréquents et utiles forment un objectif clair et atteignable."],
-                ["02", "Prononcer", "La phonétique et l’audio de chaque mot t’aident à le lire à voix haute."],
-                ["03", "Retrouver", "Les mots réapparaissent dans leurs versets pour relier vocabulaire et révélation."],
-                ["04", "Retenir", "Ils reviennent grâce à une répétition espacée calme et personnalisée."],
-              ].map(([number, title, text]) => (
-                <article className="method-step" key={number}>
-                  <span className="method-step-number">{number}</span>
-                  <h3>{title}</h3>
-                  <p>{text}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="landing-section" id="decouvrir">
-          <div className="container product-showcase">
-            <div className="lesson-path-preview" aria-label="Aperçu du parcours débutant">
-              {[
-                ["1", "Le sens de lecture", "4 min", true],
-                ["ب", "Tes trois premières lettres", "7 min", false],
-                ["ـ", "Les lettres se rejoignent", "8 min", false],
-                ["َ", "Les petites voyelles", "9 min", false],
-              ].map(([mark, title, duration, active]) => (
-                <div className={`lesson-node ${active ? "active" : ""}`} key={title as string}>
-                  <span className="lesson-node-mark quran-text">{mark}</span>
-                  <span>
-                    <strong>{title}</strong>
-                    <small>{duration}</small>
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="stack" style={{ gap: 22 }}>
-              <p className="eyebrow">Débutant signifie vraiment débutant</p>
-              <h2 className="section-title">
-                Tu peux commencer sans connaître une seule lettre.
-              </h2>
-              <p className="lead">
-                Le parcours introduit d’abord les gestes simples : où poser les
-                yeux, comment reconnaître une forme, puis comment lui donner un
-                son. Les noms techniques viennent seulement quand ils aident.
-              </p>
-              <Link className="btn btn-primary" href="/apprendre" style={{ justifySelf: "start" }}>
-                Voir le parcours <ArrowRight size={18} />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="landing-section">
-          <div className="container stack" style={{ gap: 34 }}>
-            <div className="landing-section-head">
-              <p className="eyebrow">Réviser sans pression</p>
-              <h2 className="section-title">Une seule carte. Un seul souvenir à retrouver.</h2>
-              <p className="lead">
-                Les exercices commencent simplement, puis évoluent vers l’écoute,
-                la prononciation et les mots rencontrés dans leurs versets.
-              </p>
-            </div>
-            <div className="review-preview-card">
-              <p className="quran-text" lang="ar" dir="rtl">ٱلْحَمْدُ</p>
-              <div>
-                <p className="muted">Que signifie ce mot dans le verset ?</p>
-                <strong>La louange</strong>
-              </div>
-              <div className="review-preview-actions" aria-hidden="true">
-                <span>Difficile</span>
-                <span>À revoir</span>
-                <span>Correct</span>
-                <span>Facile</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="landing-section" id="sources">
-          <div className="container product-showcase">
-            <div className="stack" style={{ gap: 22 }}>
-              <p className="eyebrow">Confiance par la transparence</p>
-              <h2 className="section-title">
-                Le texte du Coran et les aides d’apprentissage restent clairement séparés.
-              </h2>
-              <p className="lead">
-                Le texte canonique demeure immuable. Les traductions,
-                phonétiques et audios indiquent leurs sources, tandis que les
-                vérifications internes restent dans l’administration.
-              </p>
-              <Link className="btn btn-secondary" href="/sources" style={{ justifySelf: "start" }}>
-                Consulter les sources
-              </Link>
-            </div>
-            <div className="card card-pad stack">
-              <span className="chip chip-success"><ShieldCheck size={16} /> Séparation stricte des données</span>
-              <hr className="divider" />
-              <div>
-                <p className="eyebrow">Texte arabe</p>
-                <h3 style={{ margin: 0 }}>Source canonique, lecture seule</h3>
-              </div>
-              <div>
-                <p className="eyebrow">Traduction & pédagogie</p>
-                <h3 style={{ margin: 0 }}>Provenance et validation indépendantes</h3>
-              </div>
-              <div>
-                <p className="eyebrow">Historique</p>
-                <h3 style={{ margin: 0 }}>Chaque modification reste traçable</h3>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="final-cta">
-          <div className="container final-cta-card">
-            <p className="eyebrow">Ton premier défi prend moins de cinq minutes</p>
-            <h2 className="section-title">Cinq mots aujourd’hui. Un texte de moins en moins inconnu demain.</h2>
-            <p>
-              Le parcours s’adapte à ton niveau, à ton objectif et au temps que
-              tu veux consacrer aujourd’hui.
+      <main id="contenu">
+        <section className="hero container">
+          <Reveal className="hero-copy stack" style={{ "--gap": "20px" } as React.CSSProperties}>
+            <span className="eyebrow">Le Coran en 30 jours</span>
+            <h1 className="hero-title">
+              Lis le Coran.
+              <br />
+              Comprends ses mots.
+              <br />
+              <span className="hero-accent">En trente jours.</span>
+            </h1>
+            <p className="lead">
+              Trente minutes par jour pour lire le texte du muṣḥaf, mémoriser huit sourates, poser les bases du tajwīd et
+              reconnaître les 300 mots qui forment {Math.round(coverage300)} % du Coran.
             </p>
-            <Link className="btn btn-secondary" href="/onboarding">
-              Créer mon parcours <ArrowRight size={18} />
-            </Link>
-          </div>
+            <div className="row">
+              <Link href="/programme/1" className="btn primary">
+                Commencer le jour 1 <ArrowRight aria-hidden="true" />
+              </Link>
+              <Link href="/programme" className="btn dashed">
+                Voir le programme
+              </Link>
+            </div>
+          </Reveal>
         </section>
+
+        <div className="mat">
+          <section className="container landing-intro">
+            <div className="intro-grid">
+              <h2>Un rituel court, chaque jour, plutôt que de longues heures une fois.</h2>
+              <p className="muted">
+                Kalima applique ce que la recherche montre de plus solide : se tester plutôt que relire, espacer les
+                révisions, mélanger les questions. Le texte coranique vient de Tanzil, la récitation d&apos;un récitant
+                humain. Ce qui n&apos;est pas encore relu est signalé.
+              </p>
+              <Link href="/sources" className="btn dashed intro-cta">
+                Nos sources <ArrowUpRight aria-hidden="true" />
+              </Link>
+            </div>
+          </section>
+
+          <section className="container bento" aria-label="Kalima en bref">
+            <DesertWindow className="span-4 tall tile-pad tile-ritual">
+              <h3 className="eyebrow tile-head">Chaque jour</h3>
+              <ul className="ritual">
+                {RITUAL.map(([name, detail, time]) => (
+                  <li key={name}>
+                    <span className="ritual-time num">{time}</span>
+                    <span className="ritual-name">{name}</span>
+                    <span className="ritual-detail">{detail}</span>
+                  </li>
+                ))}
+              </ul>
+            </DesertWindow>
+
+            <div className="solid-tile span-4 tile-pad tile-center">
+              <h3 className="eyebrow tile-head">Le vocabulaire</h3>
+              <p className="big-number num">{coverage300.toFixed(0)} %</p>
+              <p className="muted center">
+                des occurrences du Coran sont couvertes par ses 300 mots les plus fréquents.
+              </p>
+              <p className="faint center">
+                Calcul Kalima sur {lexiconSummary.totalStems.toLocaleString("fr-FR")} mots du Quranic Arabic Corpus
+                ({lexiconSummary.distinctLemmas.toLocaleString("fr-FR")} lemmes distincts).
+              </p>
+            </div>
+
+            <DesertWindow className="span-4 tile-pad tile-center tile-word">
+              <h3 className="eyebrow tile-head">Un mot</h3>
+              <p className="ar tile-arabic" lang="ar">كَلِمَة</p>
+              <p className="center tile-word-fr">kalima · une parole, un mot</p>
+            </DesertWindow>
+
+            <div className="solid-tile span-4 tile-pad">
+              <h3 className="eyebrow tile-head">Huit sourates</h3>
+              <ul className="surah-cloud" dir="rtl">
+                {surahNames.map((name) => (
+                  <li key={name} className="ar" lang="ar">{name}</li>
+                ))}
+              </ul>
+              <p className="faint center">Et trois sourates bonus (105, 107, 109) pour celles et ceux qui lisent déjà.</p>
+            </div>
+
+            <div className="solid-tile span-8 tile-pad">
+              <h3 className="eyebrow tile-head">Quatre semaines</h3>
+              <ol className="weeks">
+                {WEEKS.slice(0, 4).map((week) => (
+                  <li key={week.week}>
+                    <span className="week-no num">S{week.week}</span>
+                    <span className="week-title">{week.title}</span>
+                    <span className="week-sub">{week.subtitle}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <DesertWindow className="span-4 tile-pad tile-honest">
+              <h3 className="eyebrow tile-head">Ce qu&apos;on ne promet pas</h3>
+              <p>
+                Une application ne certifie pas une récitation. Fais-toi écouter par une personne qualifiée : Kalima te
+                prépare à ce moment, elle ne le remplace pas.
+              </p>
+            </DesertWindow>
+
+            <div className="solid-tile span-4 tile-pad">
+              <h3 className="eyebrow tile-head">Les sources</h3>
+              <ul className="source-list">
+                <li><strong>Texte</strong> Tanzil, Uthmani 1.1</li>
+                <li><strong>Mots</strong> Quranic Arabic Corpus</li>
+                <li><strong>Traduction des sens</strong> M. Hamidullah</li>
+                <li><strong>Récitation</strong> M. R. al-ʿAfāsī</li>
+                <li><strong>Tajwīd</strong> Tuḥfat al-Aṭfāl, al-Jazariyya</li>
+              </ul>
+            </div>
+
+            <DesertWindow className="span-8 tile-pad tile-cta">
+              <div className="stack" style={{ "--gap": "14px" } as React.CSSProperties}>
+                <span className="eyebrow plain">Jour 1</span>
+                <h2>Le premier mot du Coran commence par un bāʾ.</h2>
+                <QuranText words={basmala.words} className="cta-basmala" />
+                <Link href="/programme/1" className="btn primary">
+                  Commencer maintenant <ArrowRight aria-hidden="true" />
+                </Link>
+              </div>
+            </DesertWindow>
+          </section>
+
+          <footer className="container landing-footer">
+            <p className="faint">
+              Texte coranique : Tanzil Project (CC BY 3.0, tanzil.net). Morphologie : Quranic Arabic Corpus (GPL).
+              Traduction et récitation : Quran.Foundation. Police : Amiri Quran (OFL). Vidéo : GetLayers.
+            </p>
+            <div className="row">
+              <Link href="/sources" className="link faint">Sources et licences</Link>
+              <Link href="/reglages" className="link faint">Exporter ma progression</Link>
+            </div>
+          </footer>
+        </div>
       </main>
-      <PublicFooter />
-    </>
+    </DesertStage>
   );
 }

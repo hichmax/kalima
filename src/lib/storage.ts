@@ -1,85 +1,176 @@
 "use client";
 
-import type { LearnerProgress } from "@/lib/types";
+import { useSyncExternalStore } from "react";
+import { z } from "zod";
 
-export const progressStorageKey = "kalima:progress:v2";
-const legacyProgressStorageKey = "nour:progress:v1";
-export const progressEventName = "kalima:progress";
+/**
+ * Progression locale, versionnée, tolérante aux pannes.
+ *
+ * - Tout accès à localStorage est protégé (navigation privée Safari, quota plein,
+ *   stockage désactivé) : l'application continue en mémoire.
+ * - Le format est validé par Zod à la lecture et à l'import.
+ * - Conçu pour une future synchronisation de compte : un seul document JSON,
+ *   horodaté (`updatedAt`), facile à fusionner côté serveur.
+ */
 
-export const defaultProgress: LearnerProgress = {
-  lastRoute: "/coran",
-  lastAyah: "1:1",
-  learnedWordIds: [],
-  favoriteAyahIds: [],
-  completedLessons: [],
-  learnedSurahIds: [],
-  reviewCount: 0,
-  reviewMasteredWordIds: [],
-  favoriteVocabularyWordIds: [],
-  savedPracticeWords: [],
-  customWordLists: [],
-  phoneticAssist: "complete",
-  dailyMinutes: 10,
-  learningProfile: {
-    completed: false,
-    stage: "alphabet",
-    goal: "read",
-    recommendedLessonId: "alphabet-overview",
-    answers: {},
-  },
-  dailyChallenge: {
-    date: "",
-    completedWordIds: [],
-    ratings: {},
-    streak: 0,
-    lastCompletedDate: null,
-  },
-  updatedAt: new Date(0).toISOString(),
-};
+export const STORAGE_KEY = "kalima:v2";
 
-export function normalizeProgress(value?: Partial<LearnerProgress> | null): LearnerProgress {
-  return {
-    ...defaultProgress,
-    ...value,
-    learningProfile: {
-      ...defaultProgress.learningProfile,
-      ...(value?.learningProfile || {}),
-    },
-    dailyChallenge: {
-      ...defaultProgress.dailyChallenge,
-      ...(value?.dailyChallenge || {}),
-    },
-  };
+const storedCardSchema = z.object({
+  kind: z.enum(["letter", "sign", "rule", "lemma", "verse", "concept"]),
+  addedAt: z.string(),
+  fsrs: z.record(z.string(), z.unknown()),
+  lastGrade: z.number().int().min(1).max(4).optional(),
+});
+
+const dayProgressSchema = z.object({
+  steps: z.record(z.string(), z.boolean()).default({}),
+  lessonScores: z.record(z.string(), z.number()).default({}),
+  completedAt: z.string().optional(),
+});
+
+const stateSchema = z.object({
+  version: z.literal(2),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  settings: z
+    .object({
+      phonetic: z.enum(["auto", "always", "tap", "after", "never"]).default("auto"),
+      arabicScale: z.number().min(0.8).max(1.8).default(1),
+      theme: z.enum(["nuit", "papier"]).default("nuit"),
+      track: z.enum(["debutant", "lecteur"]).default("debutant"),
+      onboarded: z.boolean().default(false),
+    })
+    .default({ phonetic: "auto", arabicScale: 1, theme: "nuit", track: "debutant", onboarded: false }),
+  days: z.record(z.string(), dayProgressSchema).default({}),
+  cards: z.record(z.string(), storedCardSchema).default({}),
+  activity: z
+    .record(z.string(), z.object({ reviews: z.number().default(0), correct: z.number().default(0), sessions: z.number().default(0) }))
+    .default({}),
+  challenges: z.record(z.string(), z.object({ score: z.number(), total: z.number() })).default({}),
+  recordings: z.record(z.string(), z.string()).default({}),
+});
+
+export type KalimaState = z.infer<typeof stateSchema>;
+export type StoredCard = z.infer<typeof storedCardSchema>;
+export type Settings = KalimaState["settings"];
+
+export function emptyState(now = new Date()): KalimaState {
+  const iso = now.toISOString();
+  return stateSchema.parse({ version: 2, createdAt: iso, updatedAt: iso });
 }
 
-export function loadProgress(): LearnerProgress {
-  if (typeof window === "undefined") return defaultProgress;
-  const stored =
-    window.localStorage.getItem(progressStorageKey) ||
-    window.localStorage.getItem(legacyProgressStorageKey);
-  if (!stored) return defaultProgress;
+function safeRead(): string | null {
   try {
-    const progress = normalizeProgress(JSON.parse(stored) as Partial<LearnerProgress>);
-    window.localStorage.setItem(progressStorageKey, JSON.stringify(progress));
-    return progress;
+    return window.localStorage.getItem(STORAGE_KEY);
   } catch {
-    return defaultProgress;
+    return null;
   }
 }
 
-export function saveProgress(progress: LearnerProgress): LearnerProgress {
-  const next = {
-    ...normalizeProgress(progress),
-    updatedAt: new Date().toISOString(),
-  };
-  window.localStorage.setItem(progressStorageKey, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(progressEventName, { detail: next }));
-  return next;
+function safeWrite(value: string): boolean {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function toggleStoredId(
-  list: string[],
-  id: string,
-): string[] {
-  return list.includes(id) ? list.filter((item) => item !== id) : [...list, id];
+export function parseState(raw: string | null): KalimaState | null {
+  if (!raw) return null;
+  try {
+    const parsed = stateSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+let cache: KalimaState | null = null;
+let persistent = true;
+const listeners = new Set<() => void>();
+const SERVER_SNAPSHOT = emptyState(new Date(0));
+
+function load(): KalimaState {
+  if (cache) return cache;
+  if (typeof window === "undefined") return SERVER_SNAPSHOT;
+  cache = parseState(safeRead()) ?? emptyState();
+  return cache;
+}
+
+function emit() {
+  for (const listener of listeners) listener();
+}
+
+export function getState(): KalimaState {
+  return load();
+}
+
+/** Applique une mise à jour immuable, persiste, notifie. Renvoie false si la persistance a échoué. */
+export function updateState(updater: (state: KalimaState) => KalimaState): boolean {
+  const next = { ...updater(load()), updatedAt: new Date().toISOString() };
+  cache = next;
+  persistent = safeWrite(JSON.stringify(next));
+  emit();
+  return persistent;
+}
+
+export function isPersistent() {
+  return persistent;
+}
+
+export function exportState(): string {
+  return JSON.stringify(load(), null, 2);
+}
+
+export function importState(raw: string): { ok: true } | { ok: false; error: string } {
+  const parsed = parseState(raw);
+  if (!parsed) return { ok: false, error: "Fichier illisible ou d'un autre format." };
+  cache = parsed;
+  persistent = safeWrite(JSON.stringify(parsed));
+  emit();
+  return { ok: true };
+}
+
+export function resetState() {
+  cache = emptyState();
+  persistent = safeWrite(JSON.stringify(cache));
+  emit();
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== STORAGE_KEY) return;
+    cache = parseState(event.newValue) ?? cache;
+    emit();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+/** Hook React : état complet, sûr à l'hydratation (le serveur voit un état vide). */
+export function useKalima(): KalimaState {
+  return useSyncExternalStore(subscribe, load, () => SERVER_SNAPSHOT);
+}
+
+/** Vrai une fois monté côté client (évite d'afficher la progression vide du serveur). */
+export function useHydrated(): boolean {
+  return useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
+}
+function subscribeNoop() {
+  return () => {};
+}
+
+/** Réservé aux tests. */
+export function __resetCacheForTests() {
+  cache = null;
+  persistent = true;
 }

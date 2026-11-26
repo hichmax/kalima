@@ -1,111 +1,61 @@
-# Kalima
+# Kalima — Le Coran en 30 jours
 
-Web app francophone pour apprendre progressivement l’arabe à travers le Coran.
-Le nom public est centralisé dans `src/config/app.ts` et peut être remplacé avec
-`NEXT_PUBLIC_APP_NAME`.
+Application web francophone pour apprendre à **lire** le texte du muṣḥaf, **mémoriser**
+la Fātiḥa et sept courtes sourates, poser les **bases du tajwīd** et reconnaître les
+**300 mots** qui couvrent 74 % des occurrences du Coran, en 30 séances d'environ 35 minutes.
 
-## Démarrage
+Plan pédagogique et technique complet, avec les sources : [`docs/REFONTE.md`](docs/REFONTE.md).
 
-Prérequis : Node.js 24+ (SQLite est fourni directement par Node).
+## Démarrer
+
+Prérequis : Node.js 24.
 
 ```bash
 npm install
-cp .env.example .env.local
+cp .env.example .env.local   # facultatif : identifiants Quran.Foundation
 npm run dev
 ```
 
-L’application fonctionne immédiatement en mode local, sans compte, sur
-`http://localhost:3000`. Le navigateur conserve la progression hors connexion.
-En développement, SQLite peut également synchroniser cette progression dans
-`data/kalima.db`. Seuls les identifiants Quran Foundation sont nécessaires pour
-charger les contenus distants.
+Sans identifiants Quran.Foundation, tout fonctionne avec le texte Tanzil ; seuls la
+traduction des sens et l'audio sont indisponibles.
 
-## Commandes de contrôle
+## Contrôles
 
 ```bash
-npm run typecheck
-npm run lint
-npm test
-npm run verify:quran
-npm run build
-npm run test:e2e
+npm run verify        # contenu + types + lint + tests
+npm run build         # vérifie aussi l'intégrité du contenu avant de compiler
 ```
 
-## Parcours livrés
+`npm run content:check` échoue si le texte Tanzil a été modifié (SHA-256), si l'alignement
+Tanzil ↔ Quranic Arabic Corpus est rompu ou si les données générées ne sont plus à jour.
+Les tests de contenu (`src/content/content.test.ts`) vérifient que chaque référence
+coranique des leçons existe, qu'aucun verset n'est tapé à la main, que chaque lemme a un
+sens et que chaque question a une seule bonne réponse.
 
-- `/` : accueil public premium avec aperçu interactif ;
-- `/onboarding` : évaluation progressive et objectif quotidien ;
-- `/dashboard` : séance du jour, reprise, révisions et repères ;
-- `/defi` : cinq mots quotidiens avec progression et série locales ;
-- `/coran` : les 114 sourates, traduction française et récitation ;
-- `/coran/:sourate/:verset/etude` : étude et audio mot à mot ;
-- `/apprendre` : 26 leçons, de l’alphabet aux fondations du tajwīd ;
-- `/reviser` : séance de 5 à 50 mots, poursuivie jusqu’à la maîtrise ;
-- `/vocabulaire` : recherche parmi 1 000 unités issues du corpus ;
-- `/progression` : suivi manuel des sourates apprises ;
-- `/sources` : provenance publique ;
-- `/admin/validation` : espace protégé de comparaison et décision.
+## Architecture
 
-## Contenu coranique
+| Dossier | Rôle |
+|---|---|
+| `content/sources/` | Sources verbatim : Tanzil (CC BY 3.0) et Quranic Arabic Corpus (GPL) |
+| `scripts/build-content.mjs` | Contrôle d'intégrité, alignement mot à mot, génération de `src/generated/` |
+| `src/content/` | Leçons, programme de 30 jours, lexique, phonétique, règles, sources (statut : à relire) |
+| `src/lib/` | FSRS (`srs.ts`), stockage local sûr (`storage.ts`), exercices, données coraniques |
+| `src/components/` | Séance du jour, exercices, mémorisation, lecteur, désert vidéo, dégradé Soffit |
+| `src/app/` | Pages (App Router, rendu statique : 197 pages) et API (récitation, mots, banque de révision) |
 
-Les métadonnées des 114 sourates sont locales. Lorsque `QF_CLIENT_ID` et
-`QF_CLIENT_SECRET` sont renseignés, le serveur charge le texte uthmani, la
-traduction française Hamidullah (ressource 31), la récitation Mishary Alafasy
-(ressource 7), ainsi que le mot-à-mot français et son audio. Le cache est limité
-à 24 heures. Aucun secret n’est envoyé au navigateur. La fixture locale
-d’Al-Fātiḥa reste disponible en cas d’indisponibilité temporaire.
+- **Texte coranique** : uniquement Tanzil, résolu par référence `sourate:verset[:mot]`.
+- **Traduction et audio** : Quran.Foundation, à l'exécution, jamais stockés dans le dépôt
+  (Developer Terms du 20/11/2026), avec crédit du traducteur et du récitant.
+- **Progression** : `localStorage` versionné, validé par Zod, export et import JSON.
+  Aucun compte pour l'instant (voir la feuille de route dans `docs/REFONTE.md`).
+- **Répétition espacée** : FSRS-7 (`ts-fsrs`), une carte par lettre, signe, règle, mot et verset.
 
-La bibliothèque contient 1 000 unités réelles classées par nombre d’occurrences
-à partir du Quranic Arabic Corpus v0.4 et de son miroir public. Chaque unité
-affichée possède un sens français et une phonétique ; les statuts internes
-permettent de poursuivre leur relecture sans exposer de texte provisoire aux
-apprenants.
+## Relecture du contenu
 
-## Stockage local SQLite
+Tout le contenu pédagogique est au statut `draft` tant qu'un enseignant **nommé** ne l'a
+pas relu. La relecture se fait par pull request : modifier le statut et le champ
+`reviewer` dans `src/content/`, avec le nom de la personne.
 
-La migration SQLite crée :
+## Licences
 
-- le texte canonique en lecture seule ;
-- la provenance des sources ;
-- les contenus pédagogiques et leur historique ;
-- les statuts de validation ;
-- la progression par appareil ;
-- les états FSRS distincts par compétence.
-
-```bash
-npm run db:init
-```
-
-Le chemin est configurable avec `KALIMA_DATABASE_PATH`. `localStorage` garde la
-progression immédiatement dans le navigateur ; en mode `hybrid`,
-`GET/POST /api/progress` la synchronise ensuite avec SQLite grâce à un UUID
-d’appareil généré localement. Aucune base cloud et aucun compte tiers ne sont
-nécessaires.
-
-## Déploiement Vercel
-
-Vercel ne fournit pas de disque SQLite persistant. La production utilise donc
-`NEXT_PUBLIC_STORAGE_MODE=browser` : chaque visiteur garde sa progression dans
-son propre navigateur, sans compte. Les identifiants Quran.Foundation et le mot
-de passe d’administration doivent être configurés comme variables
-d’environnement Vercel et ne doivent jamais être ajoutés au dépôt Git.
-
-L’administration SQLite reste destinée au travail local. Un chemin
-`KALIMA_DATABASE_PATH=/tmp/kalima.db` permet d’ouvrir l’outil sur Vercel pour une
-vérification ponctuelle, mais les décisions qui y sont prises ne sont pas
-persistantes entre les instances serveur.
-
-## PWA
-
-Le manifest, les icônes, le service worker, l’écran hors connexion et la stratégie
-de cache sont inclus. Le service worker ne met pas en cache les routes API ou
-administratives.
-
-## Documentation
-
-- `docs/SOURCES.md`
-- `docs/DATA_PROVENANCE.md`
-- `docs/CONTENT_REVIEW.md`
-- `docs/DESIGN_SYSTEM.md`
-- `docs/LICENSING.md`
-- `docs/BENCHMARK.md`
+Voir [`docs/LICENSING.md`](docs/LICENSING.md).

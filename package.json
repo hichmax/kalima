@@ -1,45 +1,43 @@
 {
   "name": "kalima",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
   "engines": {
     "node": "24.x"
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run content:check && next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "npm run build && playwright test",
-    "test:e2e:update": "npm run build && playwright test --update-snapshots",
-    "generate:vocabulary": "node scripts/generate-vocabulary.mjs",
-    "enrich:vocabulary": "node --env-file=.env.local scripts/enrich-vocabulary-qf.mjs",
-    "db:init": "node scripts/init-database.mjs",
-    "verify:quran": "node scripts/verify-quran-integrity.mjs"
+    "content:build": "node scripts/build-content.mjs",
+    "content:check": "node scripts/build-content.mjs --check",
+    "verify": "npm run content:check && npm run typecheck && npm run lint && npm test"
   },
   "dependencies": {
-    "@phosphor-icons/react": "latest",
-    "clsx": "latest",
-    "next": "^16.2.11",
-    "react": "latest",
-    "react-dom": "latest",
-    "ts-fsrs": "latest",
-    "zod": "latest"
+    "@phosphor-icons/react": "2.1.10",
+    "animejs": "4.5.0",
+    "clsx": "2.1.1",
+    "motion": "14.14.0",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "ts-fsrs": "6.0.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "@playwright/test": "latest",
-    "@testing-library/jest-dom": "latest",
-    "@testing-library/react": "latest",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "eslint": "latest",
-    "eslint-config-next": "latest",
-    "jsdom": "latest",
-    "typescript": "latest",
-    "vitest": "latest"
+    "@testing-library/jest-dom": "6.10.0",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "24.19.4",
+    "@types/react": "19.3.3",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
+    "jsdom": "27.4.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.12"
   }
 }
