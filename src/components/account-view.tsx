@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowClockwise, ArrowRight, ChartLineUp, CheckCircle, CloudArrowUp, EnvelopeSimple, ShieldCheck, SignOut, Trash, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, ArrowRight, ChartLineUp, CheckCircle, CloudArrowUp, EnvelopeSimple, SignOut, Trash, WarningCircle } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,7 +24,6 @@ export function AccountView() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [hasPassword, setHasPassword] = useState(true);
-  const [admin, setAdmin] = useState(false);
   const [savingNews, setSavingNews] = useState(false);
   const userId = session?.user.id;
 
@@ -34,10 +33,6 @@ export function AccountView() {
     void authClient.listAccounts().then(({ data }) => {
       if (alive && data) setHasPassword(data.some((account) => account.providerId === "credential"));
     });
-    void fetch("/api/admin/statut", { cache: "no-store" })
-      .then((response) => response.json())
-      .then((body: { admin?: boolean }) => alive && setAdmin(Boolean(body.admin)))
-      .catch(() => undefined);
     return () => {
       alive = false;
     };
@@ -163,17 +158,6 @@ export function AccountView() {
           <span className="account-switch" aria-hidden="true" />
         </label>
       </section>
-
-      {admin ? (
-        <Link href="/admin" className="glass card account-admin-link">
-          <ShieldCheck size={26} weight="duotone" aria-hidden="true" />
-          <span>
-            <strong>Espace administrateur</strong>
-            <span className="faint">Les inscrits et leurs adresses e-mail, à copier ou télécharger.</span>
-          </span>
-          <ArrowRight aria-hidden="true" />
-        </Link>
-      ) : null}
 
       <section className="glass card stack" style={{ "--gap": "10px" } as React.CSSProperties}>
         <h2 className="h3">Se déconnecter</h2>

@@ -60,6 +60,12 @@ sens et que chaque question a une seule bonne réponse.
   (`mergeStates`, testée) : rien n'est perdu ; ensuite chaque changement est envoyé après 2,5 s.
   Le serveur fusionne aussi, donc deux appareils ne s'écrasent pas. Suppression de compte en un clic
   (mot de passe demandé, progression en ligne effacée en cascade).
+- **Phonétique** : écrite à la main pour les versets mémorisés du programme (`src/content/recitation.ts`),
+  automatique pour les 6 236 versets ailleurs (`src/lib/phonetic-auto.ts`, d'après Tanzil + préfixes du
+  Quranic Arabic Corpus). Testée contre les transcriptions manuelles (48/53 identiques, écarts = choix de
+  prononciation) ; affichée comme « automatique » : une aide, l'écoute prime.
+- **Administration** : `/admin`, sans lien, protégée par le mot de passe `MDP_KALIMA` (cookie signé 12 h,
+  5 essais par quart d'heure).
 - **Répétition espacée** : FSRS-7 (`ts-fsrs`), une carte par lettre, signe, règle, mot et verset.
 
 ## Relecture du contenu

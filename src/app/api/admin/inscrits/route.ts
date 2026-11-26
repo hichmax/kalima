@@ -1,6 +1,6 @@
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { listUsers } from "@/lib/admin-users";
-import { auth, isAdmin } from "@/lib/auth";
+import { ADMIN_COOKIE, isValidAdminToken } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +12,7 @@ function cell(value: string) {
 
 /** Export CSV des inscrits. ?filtre=nouvelles pour ne garder que les personnes qui ont consenti. */
 export async function GET(request: Request) {
-  const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
-  if (!isAdmin(session?.user)) return new Response("Accès réservé.", { status: 403 });
+  if (!isValidAdminToken((await cookies()).get(ADMIN_COOKIE)?.value)) return new Response("Accès réservé.", { status: 403 });
 
   const onlyNews = new URL(request.url).searchParams.get("filtre") === "nouvelles";
   const users = (await listUsers()).filter((user) => !onlyNews || user.newsletter);

@@ -3947,23 +3947,8 @@ html[data-theme="papier"] .ambient-veil {
   opacity: 0.6;
 }
 
-.account-admin-link {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
 
-.account-admin-link > svg:first-child {
-  flex: none;
-  color: var(--sand);
-}
 
-.account-admin-link > span {
-  display: grid;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
 
 /* ---------------------------------------------------------------- administration */
 .admin-tools {
@@ -4052,4 +4037,156 @@ html[data-theme="papier"] .ambient-veil {
 .admin-pill.yes {
   background: color-mix(in srgb, var(--oasis) 22%, transparent);
   color: var(--oasis);
+}
+
+.admin-login {
+  max-width: 420px;
+  margin: 8vh auto 0;
+}
+
+.admin-login-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  font-size: 1.6rem;
+  color: var(--sand);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Menu « Plus » : jamais plus haut que l'écran ; il défile au doigt (téléphone, tablette en paysage)
+   sans entraîner la page derrière. */
+.menu-sheet {
+  max-height: calc(100dvh - 76px - var(--tab-height) - 28px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+@media (min-width: 900px) {
+  .menu-sheet {
+    max-height: calc(100dvh - 92px);
+  }
+}
+
+.menu-sheet > .row:first-child {
+  position: sticky;
+  top: -14px;
+  z-index: 1;
+  margin: -14px -14px 0;
+  padding: 14px 14px 6px;
+  background: linear-gradient(180deg, rgba(22, 17, 38, 0.92) 70%, rgba(22, 17, 38, 0));
+  border-radius: inherit;
+}
+
+html[data-theme="papier"] .menu-sheet > .row:first-child {
+  background: linear-gradient(180deg, rgba(251, 248, 241, 0.95) 70%, rgba(251, 248, 241, 0));
+}
+
+.scrim {
+  touch-action: none;
+}
+
+/* Barre de répétition par fenêtres de 10 versets */
+.rp-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.rp-labels {
+  position: relative;
+  overflow: hidden;
+}
+
+.rp-window {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 0.82rem;
+}
+
+.rp-overall {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rp-overall > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f9dfb0, #f78ed2, #8d74ff);
+}
+
+/* Mot en attente pendant l'écoute */
+.word-wait {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+  padding: 10px 12px 10px 16px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  color: var(--ink-2);
+  background: rgba(155, 135, 255, 0.12);
+  border: 1px solid rgba(155, 135, 255, 0.3);
+}
+
+.word-wait.speaking {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+
+.word-wait-text {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.word-wait-ar {
+  font-family: var(--font-quran);
+  font-size: 1.45rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.word-wait-gauge {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  position: relative;
+  height: 5px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.word-wait-gauge > span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, #c9bbff, #f78ed2);
+}
+
+.phonetic[data-auto] {
+  opacity: 0.86;
+}
+
+.phonetic-note {
+  margin: 0;
+  font-size: 0.82rem;
 }

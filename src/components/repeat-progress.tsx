@@ -1,6 +1,7 @@
 "use client";
 
 import { animate } from "animejs";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { player } from "@/lib/recitation-client";
 
@@ -9,7 +10,13 @@ import { player } from "@/lib/recitation-client";
  * de petits repères à la fin de chaque répétition. Le remplissage suit la récitation en
  * temps réel (position audio lue à chaque image, sans re-rendu React) ; quand il atteint
  * un marqueur, celui-ci « rebondit » (anime.js, élastique) et une onde s'en échappe.
+ *
+ * Longues plages (ex. al-Baqara, 286 versets) : la barre n'affiche que 10 versets à la fois.
+ * Au bout du 10e, la fenêtre glisse vers les 10 suivants (motion), et une fine barre globale
+ * montre où l'on en est dans toute la plage.
  */
+const WINDOW = 10;
+
 export function RepeatProgress({
   from,
   to,
@@ -33,7 +40,13 @@ export function RepeatProgress({
   const trackRef = useRef<HTMLDivElement>(null);
   const fired = useRef(new Set<string>());
   const lastFraction = useRef(0);
-  const count = to - from + 1;
+  const reduceMotion = useReducedMotion();
+  const total = to - from + 1;
+  const page = position ? Math.floor((Math.min(Math.max(position.v, from), to) - from) / WINDOW) : 0;
+  const wFrom = from + page * WINDOW;
+  const wTo = Math.min(to, wFrom + WINDOW - 1);
+  const count = wTo - wFrom + 1;
+  const pages = Math.ceil(total / WINDOW);
 
   // Nouvelle plage ou nouveau réglage : on repart d'une barre vide.
   useEffect(() => {
@@ -41,7 +54,7 @@ export function RepeatProgress({
     lastFraction.current = 0;
     if (fillRef.current) fillRef.current.style.transform = "scaleX(0)";
     if (headRef.current) headRef.current.style.left = "0%";
-  }, [from, to, verseRepeat]);
+  }, [from, to, verseRepeat, page]);
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -78,13 +91,13 @@ export function RepeatProgress({
     const tick = () => {
       frame = requestAnimationFrame(tick);
       if (!position) return;
-      const idx = position.v - from;
+      const idx = position.v - wFrom;
       const raw = player.progress();
       const p = raw && raw.src === currentSrc ? raw : null;
       const within = p && p.d > 0 ? Math.min(1, p.t / p.d) : 0;
       const fraction = Math.min(1, Math.max(0, (idx + (position.k + within) / verseRepeat) / count));
       // Retour en arrière (nouveau tour) : on laisse filer, sinon on ne recule jamais d'un poil.
-      if (fraction + 0.02 < lastFraction.current && !(position.v === from && position.k === 0)) return;
+      if (fraction + 0.02 < lastFraction.current && !(position.v === wFrom && position.k === 0)) return;
       lastFraction.current = fraction;
       if (fillRef.current) fillRef.current.style.transform = `scaleX(${fraction})`;
       if (headRef.current) headRef.current.style.left = `${fraction * 100}%`;
@@ -104,7 +117,7 @@ export function RepeatProgress({
     if (running) frame = requestAnimationFrame(tick);
     else tick(); // position figée (pause) : une seule mise à jour
     return () => cancelAnimationFrame(frame);
-  }, [running, position, from, count, verseRepeat, currentSrc]);
+  }, [running, position, wFrom, count, verseRepeat, currentSrc]);
 
   // Changement de tour : nouvelle série de rebonds, barre ramenée au début.
   const round = position?.r ?? 0;
@@ -114,11 +127,22 @@ export function RepeatProgress({
     lastFraction.current = 0;
   }, [round]);
 
-  const verses = Array.from({ length: count }, (_, i) => from + i);
+  const verses = Array.from({ length: count }, (_, i) => wFrom + i);
+  const slide = reduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.15 } }
+    : {
+        initial: { opacity: 0, x: 48, filter: "blur(6px)" },
+        animate: { opacity: 1, x: 0, filter: "blur(0px)" },
+        exit: { opacity: 0, x: -48, filter: "blur(6px)" },
+        transition: { type: "spring" as const, bounce: 0.18, duration: 0.6 },
+      };
+  const overall = position ? (position.v - from + (position.k + 1) / verseRepeat) / total : 0;
   return (
     <div className="rp" aria-hidden="true">
       <div className="rp-track" ref={trackRef}>
         <span className="rp-fill" ref={fillRef} />
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.span key={page} className="rp-layer" {...slide}>
         {verses.map((v, i) => (
           <span key={`t-${v}`}>
             {Array.from({ length: verseRepeat - 1 }, (_, j) => (
@@ -134,15 +158,31 @@ export function RepeatProgress({
             </span>
           </span>
         ))}
+          </motion.span>
+        </AnimatePresence>
         <span className="rp-head" ref={headRef} />
       </div>
       <div className="rp-labels">
-        {verses.map((v, i) => (
-          <span key={v} className="rp-label" style={{ left: `${((i + 0.5) / count) * 100}%` }} data-active={position?.v === v || undefined}>
-            {v}
-          </span>
-        ))}
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.span key={page} className="rp-layer" {...slide}>
+            {verses.map((v, i) => (
+              <span key={v} className="rp-label" style={{ left: `${((i + 0.5) / count) * 100}%` }} data-active={position?.v === v || undefined}>
+                {v}
+              </span>
+            ))}
+          </motion.span>
+        </AnimatePresence>
       </div>
+      {pages > 1 ? (
+        <div className="rp-window">
+          <span className="faint num">
+            Versets {wFrom}–{wTo} · {total} au total
+          </span>
+          <span className="rp-overall">
+            <motion.span animate={{ width: `${Math.min(100, overall * 100)}%` }} transition={{ type: "spring", bounce: 0, duration: 0.6 }} />
+          </span>
+        </div>
+      ) : null}
       <div className="rp-rounds">
         {rangeRepeat === 0 ? (
           <span className="chip">tour {round + 1} · sans fin</span>

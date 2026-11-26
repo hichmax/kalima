@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { Pool } from "pg";
+import { normalizeBaseUrl } from "@/lib/base-url";
 import { sendPasswordReset } from "@/lib/mail";
 
 /**
@@ -29,6 +30,8 @@ export const googleEnabled = Object.keys(google).length > 0;
 
 export const auth = betterAuth({
   appName: "Kalima",
+  // Tolère une valeur sans https:// ; vide = URL déduite de la requête (Preview Vercel).
+  baseURL: normalizeBaseUrl(process.env.BETTER_AUTH_URL),
   database: pool,
   emailAndPassword: {
     enabled: true,
@@ -63,13 +66,3 @@ export const auth = betterAuth({
 });
 
 export type Session = typeof auth.$Infer.Session;
-
-/** Administrateurs : e-mails listés dans ADMIN_EMAILS (séparés par des virgules) ET vérifiés (Google). */
-export function isAdmin(user: { email: string; emailVerified: boolean } | null | undefined) {
-  if (!user?.emailVerified) return false;
-  const admins = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-  return admins.includes(user.email.toLowerCase());
-}

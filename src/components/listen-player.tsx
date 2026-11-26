@@ -2,7 +2,7 @@
 
 import { Segmented } from "@/components/segmented";
 import { ArrowCounterClockwise, Pause, Play, Repeat, SkipBack, SkipForward } from "@phosphor-icons/react";
-import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Phonetic, QuranText } from "@/components/quran";
@@ -10,7 +10,7 @@ import { RepeatProgress } from "@/components/repeat-progress";
 import type { QuranWord, SurahMeta } from "@/lib/quran-types";
 import { player, unavailableMessage, usePlayer, useRecitation, useStopOnUnmount } from "@/lib/recitation-client";
 
-type SurahPayload = { n: number; verses: Array<{ v: number; w: QuranWord[]; ph: string | null }> };
+type SurahPayload = { n: number; verses: Array<{ v: number; w: QuranWord[]; ph: string | null; phAuto?: boolean }> };
 const textCache = new Map<number, Promise<SurahPayload>>();
 const loadText = (n: number) => {
   if (!textCache.has(n)) textCache.set(n, fetch(`/api/sourate/${n}`).then((r) => r.json() as Promise<SurahPayload>));
@@ -44,11 +44,16 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
   const [verseRepeat, setVerseRepeat] = useState<number>(3);
   const [rangeRepeat, setRangeRepeat] = useState<number>(3);
   const [gap, setGap] = useState<Gap>("echo");
-  const [hideText, setHideText] = useState(false);
   const [text, setText] = useState<SurahPayload | null>(null);
   const [position, setPosition] = useState<{ v: number; k: number; r: number } | null>(null);
   const [running, setRunning] = useState(false);
   const runToken = useRef(0);
+  // Mot demandé pendant l'écoute : lu à la fin du verset en cours, puis l'écoute reprend.
+  const queued = useRef<{ src: string; ar: string } | null>(null);
+  const wordPlaying = useRef<Promise<unknown> | null>(null);
+  const phase = useRef<"verse" | "gap" | "word">("gap");
+  const [waitingWord, setWaitingWord] = useState<{ ar: string; src: string } | null>(null);
+  const [speakingWord, setSpeakingWord] = useState<string | null>(null);
   const recitation = useRecitation(surah);
   const state = usePlayer();
 
@@ -66,8 +71,55 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
 
   const stop = () => {
     runToken.current += 1;
+    queued.current = null;
+    wordPlaying.current = null;
+    phase.current = "gap";
+    setWaitingWord(null);
+    setSpeakingWord(null);
     player.stop();
     setRunning(false);
+  };
+
+  /** Lit le mot en attente (s'il y en a un) et attend qu'il soit fini. */
+  const flushWord = async () => {
+    const word = queued.current;
+    if (word) {
+      queued.current = null;
+      setWaitingWord(null);
+      setSpeakingWord(word.ar);
+      const previous = phase.current;
+      phase.current = "word";
+      wordPlaying.current = player.playOnce(word.src).finally(() => {
+        setSpeakingWord(null);
+        phase.current = previous === "verse" ? "gap" : previous;
+      });
+    }
+    if (wordPlaying.current) {
+      await wordPlaying.current;
+      wordPlaying.current = null;
+    }
+    // Un autre mot touché pendant la lecture du premier : on l'enchaîne.
+    if (queued.current) await flushWord();
+  };
+
+  /**
+   * Touche d'un mot. À l'arrêt : il est lu tout de suite. Pendant l'écoute : si un verset est
+   * en cours, le mot attend la fin du verset (jauge visible) ; pendant une pause, il est lu aussitôt.
+   * Dans les deux cas, l'écoute reprend ensuite d'elle-même.
+   */
+  const onWord = (src: string, ar: string) => {
+    if (!running) {
+      player.stop();
+      setSpeakingWord(ar);
+      void player.playOnce(src).finally(() => setSpeakingWord(null));
+      return;
+    }
+    queued.current = { src, ar };
+    // On se fie à la phase de la boucle, pas à l'état de l'audio : pendant le chargement d'un verset,
+    // l'audio est encore « en pause » mais le verset va commencer — le mot doit attendre.
+    if (phase.current === "verse") setWaitingWord({ ar, src });
+    else if (phase.current === "gap") void flushWord();
+    // phase « word » : un mot est déjà en cours ; celui-ci passera juste après.
   };
 
   /** Lance la répétition depuis `at` (par défaut : début de la plage). Reprend verset, répétition et tour. */
@@ -86,10 +138,17 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
             return;
           }
           setPosition({ v, k, r });
+          if (wordPlaying.current) await flushWord();
+          if (!alive()) return;
+          phase.current = "verse";
           const result = await player.playOnce(src, state.rate);
+          phase.current = "gap";
           if (!alive() || !result.ended) return;
+          await flushWord(); // mot demandé pendant le verset : lu maintenant, avant la pause
+          if (!alive()) return;
           if (gap === "short") await sleep(2000);
           if (gap === "echo") await sleep(Math.max(1500, (result.duration / Math.max(0.5, state.rate)) * 1000));
+          await flushWord(); // mot demandé pendant la pause : on attend qu'il soit fini
         }
       }
     }
@@ -161,24 +220,41 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
             {meta.tr} · verset {currentV}
             {position ? ` · répétition ${position.k + 1}/${verseRepeat} · tour ${position.r + 1}${rangeRepeat ? `/${rangeRepeat}` : ""}` : ""}
           </span>
-          <button type="button" className="btn small ghost" aria-pressed={hideText} onClick={() => setHideText((h) => !h)}>
-            {hideText ? "Montrer le texte" : "Masquer le texte"}
-          </button>
         </div>
         {currentVerse ? (
           <QuranText
             words={currentVerse.w}
             verse={currentVerse.v}
-            hidden={hideText ? "hint" : "none"}
             onWord={(i) => {
               const src = media.get(currentVerse.v)?.words[i - 1];
-              if (src) void player.play(src);
+              if (src) onWord(src, currentVerse.w[i - 1]?.ar ?? "");
             }}
           />
         ) : (
           <p className="faint">Chargement du texte…</p>
         )}
+        <AnimatePresence>
+          {waitingWord ? (
+            <WordWait
+              key="wait"
+              word={waitingWord.ar}
+              verseSrc={position ? media.get(position.v)?.audio ?? null : null}
+              onCancel={() => {
+                queued.current = null;
+                setWaitingWord(null);
+              }}
+            />
+          ) : speakingWord !== null ? (
+            <motion.p key="speak" className="word-wait speaking" role="status" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <span className="word-wait-ar" lang="ar" dir="rtl">
+                {speakingWord}
+              </span>{" "}
+              lecture du mot…
+            </motion.p>
+          ) : null}
+        </AnimatePresence>
         {currentVerse?.ph ? <Phonetic text={currentVerse.ph} mode="tap" /> : null}
+        {currentVerse?.phAuto ? <p className="faint phonetic-note">Phonétique automatique : une aide à la lecture, l&apos;écoute de la récitation prime.</p> : null}
         {media.get(currentV)?.translation ? <p className="translation">{media.get(currentV)?.translation}</p> : null}
 
         <RepeatProgress
@@ -231,7 +307,7 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
           </p>
         ) : null}
         <p className="faint">
-          <Repeat aria-hidden="true" /> Touche un mot pour l&apos;écouter seul. Récitation : Mishary Rāshid al-ʿAfāsī
+          <Repeat aria-hidden="true" /> Touche un mot pour l&apos;écouter seul : pendant l&apos;écoute, il est lu à la fin du verset en cours, puis l&apos;écoute reprend. Récitation : Mishary Rāshid al-ʿAfāsī
           (Ḥafṣ ʿan ʿĀṣim), via Quran.Foundation · texte Tanzil.
         </p>
       </motion.section>
@@ -262,5 +338,38 @@ function Choice<T extends string | number>({ label, values, value, onChange }: {
       <span className="faint">{label}</span>
       <Segmented size="sm" label={label} value={value} onChange={onChange} options={values.map(([v, text]) => ({ value: v, label: text }))} />
     </div>
+  );
+}
+
+/** Jauge d'attente : le mot sera lu quand le verset en cours se termine. */
+function WordWait({ word, verseSrc, onCancel }: { word: string; verseSrc: string | null; onCancel: () => void }) {
+  const barRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      frame = requestAnimationFrame(tick);
+      const p = player.progress();
+      // verset pas encore chargé : jauge vide ; elle se remplit au rythme de la récitation
+      const fraction = p && p.src === verseSrc && p.d > 0 ? Math.min(1, p.t / p.d) : 0;
+      if (barRef.current) barRef.current.style.transform = `scaleX(${fraction})`;
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [verseSrc]);
+  return (
+    <motion.div className="word-wait" role="status" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}>
+      <span className="word-wait-text">
+        <span className="word-wait-ar" lang="ar" dir="rtl">
+          {word}
+        </span>
+        sera lu à la fin du verset
+      </span>
+      <span className="word-wait-gauge" aria-hidden="true">
+        <span ref={barRef} />
+      </span>
+      <button type="button" className="btn small ghost" onClick={onCancel}>
+        Annuler
+      </button>
+    </motion.div>
   );
 }

@@ -137,14 +137,18 @@ export function ReaderControls({ surah, ayas }: { surah: number; ayas: number })
 }
 
 /** Boutons et traduction sous un verset (îlot client minimal). */
-export function VerseExtras({ surah, verse, phonetic }: { surah: number; verse: number; phonetic?: string }) {
+export function VerseExtras({ surah, verse, phonetic, phoneticAuto }: { surah: number; verse: number; phonetic?: string; phoneticAuto?: boolean }) {
   const recitation = useRecitation(surah);
   const state = usePlayer();
   const media = recitation?.verses?.find((v) => v.v === verse);
   const looping = Boolean(media?.audio) && state.src === media?.audio && state.loop && state.playing;
   return (
     <div className="verse-extras">
-      {phonetic ? <p className="phonetic">{phonetic}</p> : null}
+      {phonetic ? (
+        <p className="phonetic" data-auto={phoneticAuto || undefined} title={phoneticAuto ? "Transcription automatique : une aide, l'écoute prime" : undefined}>
+          {phonetic}
+        </p>
+      ) : null}
       {media?.translation ? <p className="translation">{media.translation}</p> : null}
       {media?.audio ? (
         <div className="row" style={{ "--gap": "6px" } as React.CSSProperties}>

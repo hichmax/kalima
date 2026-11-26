@@ -1,26 +1,21 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import Link from "next/link";
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import { AdminLogin } from "@/components/admin-login";
 import { AdminView } from "@/components/admin-view";
+import { ADMIN_COOKIE, adminEnabled, isValidAdminToken } from "@/lib/admin-auth";
 import { listUsers } from "@/lib/admin-users";
-import { auth, isAdmin } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Administration", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
+/** Page cachée : aucun lien n'y mène. Sans MDP_KALIMA, elle n'existe pas (404). */
 export default async function AdminPage() {
-  const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
-  if (!isAdmin(session?.user)) {
+  if (!adminEnabled()) notFound();
+  if (!isValidAdminToken((await cookies()).get(ADMIN_COOKIE)?.value)) {
     return (
       <main className="container page narrow stack" style={{ "--gap": "14px" } as React.CSSProperties}>
-        <section className="glass card stack" style={{ "--gap": "10px" } as React.CSSProperties}>
-          <span className="eyebrow plain">Administration</span>
-          <h1>Accès réservé</h1>
-          <p className="muted">Cette page est réservée aux administrateurs de Kalima, connectés avec Google.</p>
-          <Link href="/connexion?suite=/admin" className="btn primary" style={{ justifySelf: "start" }}>
-            Se connecter
-          </Link>
-        </section>
+        <AdminLogin />
       </main>
     );
   }

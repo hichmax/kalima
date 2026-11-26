@@ -62,7 +62,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (!menuOpen) return;
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && setMenuOpen(false);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // La page derrière ne défile plus tant que le menu est ouvert (seul le menu défile).
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      root.style.overflow = previous;
+    };
   }, [menuOpen]);
 
   return (

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QuranLine } from "@/components/quran-static";
 import { ReaderControls, VerseExtras, WordStudy } from "@/components/reader";
-import { recitationPhonetics } from "@/content/recitation";
+import { surahPhonetics } from "@/lib/phonetics";
 import { getSurahMeta, loadSurah, surahIndex, tanzilNotice } from "@/lib/quran-data";
 import { wordsToText } from "@/lib/quran-types";
 
@@ -26,6 +26,7 @@ export default async function SurahPage({ params }: { params: Promise<{ sourate:
   if (!Number.isInteger(n) || n < 1 || n > 114) notFound();
   const meta = getSurahMeta(n);
   const surah = await loadSurah(n);
+  const phonetics = await surahPhonetics(n);
   const basmala = n === 1 || n === 9 ? null : (await loadSurah(1)).verses[0].w;
 
   return (
@@ -38,6 +39,11 @@ export default async function SurahPage({ params }: { params: Promise<{ sourate:
       </header>
 
       <ReaderControls surah={n} ayas={meta.ayas} />
+      {phonetics.some((p) => p.auto) ? (
+        <p className="faint phonetic-note">
+          Phonétique de cette sourate : transcription automatique, une aide à la lecture. L&apos;écoute de la récitation prime.
+        </p>
+      ) : null}
 
       <WordStudy surah={n}>
         {basmala ? (
@@ -49,7 +55,7 @@ export default async function SurahPage({ params }: { params: Promise<{ sourate:
           {surah.verses.map((verse) => (
             <li key={verse.v} className="verse-item" data-verse={verse.v}>
               <QuranLine s={n} v={verse.v} words={verse.w} />
-              <VerseExtras surah={n} verse={verse.v} phonetic={recitationPhonetics[`${n}:${verse.v}`]} />
+              <VerseExtras surah={n} verse={verse.v} phonetic={phonetics[verse.v - 1]?.text} phoneticAuto={phonetics[verse.v - 1]?.auto} />
             </li>
           ))}
         </ol>
