@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowClockwise, ArrowRight, ChartLineUp, CheckCircle, CloudArrowUp, SignOut, Trash, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, ArrowRight, ChartLineUp, CheckCircle, CloudArrowUp, EnvelopeSimple, ShieldCheck, SignOut, Trash, WarningCircle } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { syncNow, useSyncStatus } from "@/lib/account-sync";
 import { authClient, signOut, useSession } from "@/lib/auth-client";
 
@@ -23,6 +23,25 @@ export function AccountView() {
   const [password, setPassword] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [hasPassword, setHasPassword] = useState(true);
+  const [admin, setAdmin] = useState(false);
+  const [savingNews, setSavingNews] = useState(false);
+  const userId = session?.user.id;
+
+  useEffect(() => {
+    if (!userId) return;
+    let alive = true;
+    void authClient.listAccounts().then(({ data }) => {
+      if (alive && data) setHasPassword(data.some((account) => account.providerId === "credential"));
+    });
+    void fetch("/api/admin/statut", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((body: { admin?: boolean }) => alive && setAdmin(Boolean(body.admin)))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [userId]);
 
   if (isPending) return <div className="dashboard-skeleton" aria-busy="true" />;
 
@@ -66,10 +85,16 @@ export function AccountView() {
     event.preventDefault();
     setDeleting(true);
     setDeleteError(null);
-    const { error } = await authClient.deleteUser({ password });
+    const { error } = await authClient.deleteUser(hasPassword ? { password } : {});
     if (error) {
       setDeleting(false);
-      setDeleteError(error.code === "INVALID_PASSWORD" || error.status === 400 ? "Mot de passe incorrect." : "Suppression impossible pour l'instant. Réessaie plus tard.");
+      setDeleteError(
+        error.code === "SESSION_EXPIRED"
+          ? "Par sécurité, reconnecte-toi avec Google puis recommence (connexion de moins d'un jour exigée)."
+          : error.code === "INVALID_PASSWORD"
+            ? "Mot de passe incorrect."
+            : "Suppression impossible pour l'instant. Réessaie plus tard.",
+      );
       return;
     }
     router.push("/aujourdhui");
@@ -115,6 +140,42 @@ export function AccountView() {
       </section>
 
       <section className="glass card stack" style={{ "--gap": "10px" } as React.CSSProperties}>
+        <h2 className="h3">Nouvelles de Kalima</h2>
+        <label className="account-toggle">
+          <span className="account-toggle-text">
+            <EnvelopeSimple weight="duotone" aria-hidden="true" />
+            <span>
+              <strong>Recevoir les nouvelles par e-mail</strong>
+              <span className="faint">Nouveaux défis, nouvelles leçons. Jamais de publicité, jamais revendu.</span>
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            checked={Boolean(user.newsletter)}
+            disabled={savingNews}
+            onChange={async (event) => {
+              setSavingNews(true);
+              await authClient.updateUser({ newsletter: event.target.checked });
+              setSavingNews(false);
+            }}
+          />
+          <span className="account-switch" aria-hidden="true" />
+        </label>
+      </section>
+
+      {admin ? (
+        <Link href="/admin" className="glass card account-admin-link">
+          <ShieldCheck size={26} weight="duotone" aria-hidden="true" />
+          <span>
+            <strong>Espace administrateur</strong>
+            <span className="faint">Les inscrits et leurs adresses e-mail, à copier ou télécharger.</span>
+          </span>
+          <ArrowRight aria-hidden="true" />
+        </Link>
+      ) : null}
+
+      <section className="glass card stack" style={{ "--gap": "10px" } as React.CSSProperties}>
         <h2 className="h3">Se déconnecter</h2>
         <p className="muted">Ta progression reste aussi sur cet appareil. Tu pourras la retrouver en te reconnectant.</p>
         <button type="button" className="btn small" style={{ justifySelf: "start" }} onClick={leave} disabled={leaving}>
@@ -136,17 +197,21 @@ export function AccountView() {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
             >
-              <label className="account-field">
-                <span>Confirme avec ton mot de passe</span>
-                <input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
-              </label>
+              {hasPassword ? (
+                <label className="account-field">
+                  <span>Confirme avec ton mot de passe</span>
+                  <input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
+                </label>
+              ) : (
+                <p className="faint">Compte Google : aucune saisie demandée. Cette action est définitive.</p>
+              )}
               {deleteError ? (
                 <p className="account-error" role="alert">
                   {deleteError}
                 </p>
               ) : null}
               <div className="row">
-                <button type="submit" className="btn small danger" disabled={deleting || !password}>
+                <button type="submit" className="btn small danger" disabled={deleting || (hasPassword && !password)}>
                   <Trash aria-hidden="true" /> {deleting ? "Suppression…" : "Supprimer définitivement"}
                 </button>
                 <button type="button" className="btn small ghost" onClick={() => setConfirmDelete(false)}>

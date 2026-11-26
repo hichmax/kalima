@@ -3868,3 +3868,188 @@ html[data-theme="papier"] .ambient-veil {
     padding: 8px 11px;
   }
 }
+
+/* ---------------------------------------------------------------- compte : interrupteur, lien admin */
+.account-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+}
+
+.account-toggle-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.account-toggle-text > svg {
+  flex: none;
+  font-size: 1.5rem;
+  color: var(--violet);
+}
+
+.account-toggle-text > span {
+  display: grid;
+  gap: 2px;
+}
+
+.account-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.account-switch {
+  position: relative;
+  flex: none;
+  width: 52px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--line-strong);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: background-color 220ms ease;
+}
+
+.account-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff, #e9e3ff);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.account-toggle input:checked + .account-switch {
+  background: linear-gradient(135deg, #f78ed2, #8d74ff);
+  border-color: transparent;
+}
+
+.account-toggle input:checked + .account-switch::after {
+  transform: translateX(20px);
+}
+
+.account-toggle input:focus-visible + .account-switch {
+  outline: 2px solid var(--violet);
+  outline-offset: 3px;
+}
+
+.account-toggle input:disabled + .account-switch {
+  opacity: 0.6;
+}
+
+.account-admin-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.account-admin-link > svg:first-child {
+  flex: none;
+  color: var(--sand);
+}
+
+.account-admin-link > span {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- administration */
+.admin-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 240px;
+  max-width: 360px;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(0, 0, 0, 0.16);
+  color: var(--ink-3);
+}
+
+.admin-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 1rem;
+}
+
+.admin-note {
+  margin: 0;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  margin: 0 -4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.admin-table th {
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 11px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-email {
+  font-weight: 600;
+  user-select: all;
+}
+
+.admin-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-3);
+}
+
+.admin-pill.yes {
+  background: color-mix(in srgb, var(--oasis) 22%, transparent);
+  color: var(--oasis);
+}

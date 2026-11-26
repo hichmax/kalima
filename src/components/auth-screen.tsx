@@ -8,7 +8,6 @@ import {
   DeviceMobile,
   Eye,
   EyeSlash,
-  GoogleLogo,
   LockKey,
   Sparkle,
   WarningCircle,
@@ -19,9 +18,22 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { LogoMark } from "@/components/logo";
 import { Segmented } from "@/components/segmented";
+import { ForgotPassword, NewPassword } from "@/components/auth-reset";
 import { signIn, signUp, useSession } from "@/lib/auth-client";
 
 type Mode = "connexion" | "inscription";
+
+/** Logo « G » officiel de Google (couleurs de la charte), exigé sur un bouton de connexion Google. */
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+    </svg>
+  );
+}
 
 /** Messages d'erreur de Better Auth, en clair. */
 function explain(error: { code?: string; status?: number; message?: string } | null | undefined): string {
@@ -63,17 +75,35 @@ const PERKS = [
   { icon: LockKey, text: "Aucune publicité, aucune revente de données" },
 ];
 
-export function AuthScreen({ initialMode, next, googleEnabled }: { initialMode: Mode; next: string; googleEnabled: boolean }) {
+export function AuthScreen({
+  initialMode,
+  next,
+  googleEnabled,
+  initialError,
+  resetEnabled,
+  initialForgot = false,
+  reset = null,
+}: {
+  initialMode: Mode;
+  next: string;
+  googleEnabled: boolean;
+  initialError: string | null;
+  resetEnabled: boolean;
+  initialForgot?: boolean;
+  reset?: { token: string | null; invalid: boolean } | null;
+}) {
   const router = useRouter();
   const reduce = useReducedMotion();
   const { data: session, isPending } = useSession();
   const [mode, setMode] = useState<Mode>(initialMode);
+  const [forgot, setForgot] = useState(initialForgot && resetEnabled);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState<"email" | "google" | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
+  const [newsletter, setNewsletter] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [formScope, animateForm] = useAnimate<HTMLFormElement>();
@@ -135,7 +165,7 @@ export function AuthScreen({ initialMode, next, googleEnabled }: { initialMode: 
     if (mode === "inscription" && password.length < 8) return fail("Le mot de passe doit faire au moins 8 caractères.");
     setBusy("email");
     if (mode === "inscription") {
-      const { data, error: failure } = await signUp.email({ name: name.trim() || email.split("@")[0], email: email.trim(), password });
+      const { data, error: failure } = await signUp.email({ name: name.trim() || email.split("@")[0], email: email.trim(), password, newsletter });
       if (failure || !data) return fail(explain(failure));
       setDone(data.user.name || "toi");
     } else {
@@ -149,13 +179,18 @@ export function AuthScreen({ initialMode, next, googleEnabled }: { initialMode: 
   const google = async () => {
     setError(null);
     setBusy("google");
-    const { error: failure } = await signIn.social({ provider: "google", callbackURL: next });
+    // Le consentement est mémorisé le temps de l'aller-retour chez Google, puis enregistré au retour.
+    try {
+      if (mode === "inscription" && newsletter) sessionStorage.setItem("kalima:newsletter", "1");
+      else sessionStorage.removeItem("kalima:newsletter");
+    } catch {}
+    const { error: failure } = await signIn.social({ provider: "google", callbackURL: next, errorCallbackURL: "/connexion" });
     if (failure) fail(explain(failure));
   };
 
   const spring = reduce ? { duration: 0.2 } : { type: "spring" as const, bounce: 0.22, duration: 0.7 };
   const level = strength(password);
-  const signedIn = Boolean(session) && !done;
+  const signedIn = Boolean(session) && !done && !reset;
 
   return (
     <div className="auth">
@@ -243,6 +278,10 @@ export function AuthScreen({ initialMode, next, googleEnabled }: { initialMode: 
                 <h2 id="auth-heading">Bienvenue, {done} !</h2>
                 <p className="muted">On rassemble ta progression… Tout ce que tu as fait sur cet appareil est conservé.</p>
               </motion.div>
+            ) : reset ? (
+              <motion.div key="reset" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <NewPassword token={reset.token} invalid={reset.invalid} />
+              </motion.div>
             ) : signedIn ? (
               <motion.div key="signed" className="auth-done" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <span className="auth-done-icon">
@@ -258,6 +297,10 @@ export function AuthScreen({ initialMode, next, googleEnabled }: { initialMode: 
                     Mon compte
                   </Link>
                 </div>
+              </motion.div>
+            ) : forgot ? (
+              <motion.div key="forgot" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.25 }}>
+                <ForgotPassword initialEmail={email} onBack={() => setForgot(false)} />
               </motion.div>
             ) : (
               <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.2 }}>
@@ -279,10 +322,29 @@ export function AuthScreen({ initialMode, next, googleEnabled }: { initialMode: 
                   ]}
                 />
 
+                <AnimatePresence initial={false}>
+                  {mode === "inscription" ? (
+                    <motion.label
+                      key="newsletter"
+                      className="auth-consent"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={reduce ? { duration: 0 } : { type: "spring", bounce: 0, duration: 0.4 }}
+                    >
+                      <input type="checkbox" checked={newsletter} onChange={(event) => setNewsletter(event.target.checked)} />
+                      <span className="auth-check" aria-hidden="true" />
+                      <span>
+                        Recevoir les nouvelles de Kalima par e-mail <em>(facultatif, désinscription en un clic)</em>
+                      </span>
+                    </motion.label>
+                  ) : null}
+                </AnimatePresence>
+
                 {googleEnabled ? (
                   <>
                     <button type="button" className="btn block auth-google" onClick={google} disabled={busy !== null}>
-                      {busy === "google" ? <span className="auth-spinner" aria-hidden="true" /> : <GoogleLogo weight="bold" aria-hidden="true" />}
+                      {busy === "google" ? <span className="auth-spinner" aria-hidden="true" /> : <GoogleMark />}
                       Continuer avec Google
                     </button>
                     <div className="auth-or" role="separator">
@@ -358,6 +420,19 @@ export function AuthScreen({ initialMode, next, googleEnabled }: { initialMode: 
                     </span>
                   </label>
 
+                  {mode === "connexion" && resetEnabled ? (
+                    <button
+                      type="button"
+                      className="auth-forgot"
+                      onClick={() => {
+                        setError(null);
+                        setForgot(true);
+                      }}
+                    >
+                      Mot de passe oublié ?
+                    </button>
+                  ) : null}
+
                   <AnimatePresence initial={false}>
                     {mode === "inscription" && password ? (
                       <motion.div
@@ -402,7 +477,6 @@ export function AuthScreen({ initialMode, next, googleEnabled }: { initialMode: 
 
                 <p className="auth-note">
                   Ce que tu as déjà fait sur cet appareil sera ajouté à ton compte : rien n&apos;est perdu.
-                  {mode === "connexion" ? " Mot de passe oublié ? La récupération par e-mail arrive bientôt." : null}
                 </p>
               </motion.div>
             )}
@@ -414,7 +488,6 @@ export function AuthScreen({ initialMode, next, googleEnabled }: { initialMode: 
         <Link href="/" className="auth-back">
           <ArrowLeft aria-hidden="true" /> Accueil
         </Link>
-        <span>Vidéo : « Purple desert », GetLayers</span>
       </footer>
     </div>
   );
