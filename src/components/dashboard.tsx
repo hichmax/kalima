@@ -158,7 +158,13 @@ function Welcome() {
           Je lis déjà, je veux progresser
         </button>
       </div>
-      <p className="faint">Ta progression reste sur cet appareil. Pense à l&apos;exporter de temps en temps (Réglages).</p>
+      <p className="faint">
+        Ta progression reste sur cet appareil.{" "}
+        <Link href="/connexion?mode=inscription" className="inline-link">
+          Crée un compte
+        </Link>{" "}
+        pour la retrouver partout.
+      </p>
     </section>
   );
 }

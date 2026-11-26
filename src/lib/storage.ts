@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { z } from "zod";
+import { emptyState, stateSchema, type KalimaState } from "@/lib/progress-schema";
 
 /**
  * Progression locale, versionnée, tolérante aux pannes.
@@ -15,49 +15,7 @@ import { z } from "zod";
 
 export const STORAGE_KEY = "kalima:v2";
 
-const storedCardSchema = z.object({
-  kind: z.enum(["letter", "sign", "rule", "lemma", "verse", "concept"]),
-  addedAt: z.string(),
-  fsrs: z.record(z.string(), z.unknown()),
-  lastGrade: z.number().int().min(1).max(4).optional(),
-});
-
-const dayProgressSchema = z.object({
-  steps: z.record(z.string(), z.boolean()).default({}),
-  lessonScores: z.record(z.string(), z.number()).default({}),
-  completedAt: z.string().optional(),
-});
-
-const stateSchema = z.object({
-  version: z.literal(2),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  settings: z
-    .object({
-      phonetic: z.enum(["auto", "always", "tap", "after", "never"]).default("auto"),
-      arabicScale: z.number().min(0.8).max(1.8).default(1),
-      theme: z.enum(["nuit", "papier"]).default("nuit"),
-      track: z.enum(["debutant", "lecteur"]).default("debutant"),
-      onboarded: z.boolean().default(false),
-    })
-    .default({ phonetic: "auto", arabicScale: 1, theme: "nuit", track: "debutant", onboarded: false }),
-  days: z.record(z.string(), dayProgressSchema).default({}),
-  cards: z.record(z.string(), storedCardSchema).default({}),
-  activity: z
-    .record(z.string(), z.object({ reviews: z.number().default(0), correct: z.number().default(0), sessions: z.number().default(0) }))
-    .default({}),
-  challenges: z.record(z.string(), z.object({ score: z.number(), total: z.number() })).default({}),
-  recordings: z.record(z.string(), z.string()).default({}),
-});
-
-export type KalimaState = z.infer<typeof stateSchema>;
-export type StoredCard = z.infer<typeof storedCardSchema>;
-export type Settings = KalimaState["settings"];
-
-export function emptyState(now = new Date()): KalimaState {
-  const iso = now.toISOString();
-  return stateSchema.parse({ version: 2, createdAt: iso, updatedAt: iso });
-}
+export { emptyState, stateSchema, type KalimaState, type Settings, type StoredCard } from "@/lib/progress-schema";
 
 function safeRead(): string | null {
   try {
@@ -130,6 +88,21 @@ export function importState(raw: string): { ok: true } | { ok: false; error: str
   persistent = safeWrite(JSON.stringify(parsed));
   emit();
   return { ok: true };
+}
+
+/** Remplace l'état sans le re-dater (synchronisation de compte : évite une boucle d'envois). */
+export function replaceState(next: KalimaState) {
+  cache = next;
+  persistent = safeWrite(JSON.stringify(next));
+  emit();
+}
+
+/** Écoute les changements de progression hors React (synchronisation). */
+export function onStateChange(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 export function resetState() {

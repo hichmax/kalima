@@ -9,6 +9,8 @@ import { countUp } from "@/lib/anime";
 import { computeStreak, localDayKey, addDays } from "@/lib/dates";
 import { completedDays } from "@/lib/progress";
 import { knownCount } from "@/lib/srs";
+import { useSyncStatus } from "@/lib/account-sync";
+import { useSession } from "@/lib/auth-client";
 import { useHydrated, useKalima } from "@/lib/storage";
 
 function Stat({ value, suffix = "", label, icon }: { value: number; suffix?: string; label: string; icon: React.ReactNode }) {
@@ -90,16 +92,44 @@ export function ProgressView({ curve, lemmaCounts, totalStems }: { curve: Array<
         <ForecastChart cards={state.cards} />
       </div>
 
+      <SaveCard />
+    </div>
+  );
+}
+
+function SaveCard() {
+  const { data: session } = useSession();
+  const sync = useSyncStatus();
+  if (session) {
+    return (
       <section className="glass card stack" style={{ "--gap": "8px" } as React.CSSProperties}>
-        <h2 className="h3">Garder ta progression</h2>
+        <h2 className="h3">Ta progression est sauvegardée</h2>
         <p className="muted">
-          Ta progression est enregistrée sur cet appareil. En attendant les comptes, exporte-la de temps en temps pour la
-          sauvegarder ou la passer sur un autre appareil.
+          {sync.state === "error"
+            ? "La dernière synchronisation a échoué ; elle sera retentée automatiquement. Rien n'est perdu sur cet appareil."
+            : "Elle est liée à ton compte et se synchronise toute seule sur tous tes appareils."}
         </p>
-        <Link href="/reglages" className="btn small" style={{ justifySelf: "start" }}>
-          Exporter ou importer
+        <Link href="/compte" className="btn small" style={{ justifySelf: "start" }}>
+          Mon compte
         </Link>
       </section>
-    </div>
+    );
+  }
+  return (
+    <section className="glass card stack" style={{ "--gap": "8px" } as React.CSSProperties}>
+      <h2 className="h3">Garder ta progression</h2>
+      <p className="muted">
+        Pour l&apos;instant, elle est enregistrée sur cet appareil seulement. Crée un compte gratuit pour la retrouver partout :
+        ce que tu as déjà fait est conservé.
+      </p>
+      <div className="row">
+        <Link href="/connexion?mode=inscription&suite=/progression" className="btn small primary">
+          Créer un compte
+        </Link>
+        <Link href="/reglages" className="btn small ghost">
+          Exporter un fichier
+        </Link>
+      </div>
+    </section>
   );
 }

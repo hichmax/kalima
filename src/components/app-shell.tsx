@@ -14,13 +14,16 @@ import {
   Seal,
   SunHorizon,
   TextAa,
+  UserCircle,
   X,
 } from "@phosphor-icons/react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { AccountSync } from "@/components/account-sync";
 import { AmbientBackdrop } from "@/components/ambient-backdrop";
+import { useSession } from "@/lib/auth-client";
 import { LogoMark } from "@/components/logo";
 
 /** Les cinq destinations du quotidien (barre du bas sur mobile). */
@@ -49,6 +52,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const reduce = useReducedMotion();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { data: session } = useSession();
+  const account = session
+    ? { href: "/compte", label: "Mon compte", detail: session.user.email, icon: UserCircle }
+    : { href: "/connexion", label: "Se connecter", detail: "Retrouver ta progression sur tous tes appareils", icon: UserCircle };
   const spring = reduce ? { duration: 0 } : { type: "spring" as const, bounce: 0, duration: 0.35 };
 
   useEffect(() => {
@@ -61,6 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <>
       <AmbientBackdrop />
+      <AccountSync />
       <header className="topbar">
         <div className="container">
           <div className="topbar-inner glass thin">
@@ -70,10 +78,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
             <LayoutGroup id="desktop-nav">
               <nav className="desktop-nav" aria-label="Navigation principale">
-                {[...NAV, { href: "/alphabet", label: "Alphabet" }, { href: "/mots", label: "Mots" }].map((item) => {
+                {[...NAV, { href: "/alphabet", label: "Alphabet", extra: true }, { href: "/mots", label: "Mots", extra: true }].map((item) => {
                   const active = isActive(pathname, item.href);
                   return (
-                    <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}>
+                    <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={"extra" in item ? "nav-extra" : undefined}>
                       {active && <motion.span layoutId="nav-pill" className="nav-pill" transition={spring} />}
                       {item.label}
                     </Link>
@@ -81,6 +89,16 @@ export function AppShell({ children }: { children: ReactNode }) {
                 })}
               </nav>
             </LayoutGroup>
+            <div className="topbar-actions">
+            <Link
+              href={account.href}
+              className="btn icon ghost account-btn"
+              aria-label={account.label}
+              data-signed={session ? "in" : "out"}
+              aria-current={isActive(pathname, account.href) ? "page" : undefined}
+            >
+              {session ? <span className="account-initial" aria-hidden="true">{(session.user.name || session.user.email).trim().charAt(0).toUpperCase()}</span> : <UserCircle size={22} weight="duotone" aria-hidden="true" />}
+            </Link>
             <button
               type="button"
               className="btn small menu-btn"
@@ -90,6 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <List aria-hidden="true" /> Plus
             </button>
+            </div>
           </div>
         </div>
       </header>
@@ -120,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </button>
               </div>
               <ul className="menu-list">
-                {MORE.map(({ href, label, detail, icon: Icon }) => (
+                {[account, ...MORE].map(({ href, label, detail, icon: Icon }) => (
                   <li key={href}>
                     <Link href={href} className="menu-item" aria-current={isActive(pathname, href) ? "page" : undefined} onClick={() => setMenuOpen(false)}>
                       <Icon size={24} weight="duotone" aria-hidden="true" />

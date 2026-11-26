@@ -12,12 +12,19 @@ Prérequis : Node.js 24.
 
 ```bash
 npm install
-cp .env.example .env.local   # facultatif : identifiants Quran.Foundation
+cp .env.example .env.local   # facultatif : Quran.Foundation, base Neon, Better Auth
 npm run dev
 ```
 
 Sans identifiants Quran.Foundation, tout fonctionne avec le texte Tanzil ; seuls la
 traduction des sens et l'audio sont indisponibles.
+
+Comptes : renseigner `DATABASE_URL` et `BETTER_AUTH_SECRET`, puis créer les tables une fois :
+
+```bash
+npx auth@1.7.28 migrate --config src/lib/auth.ts --yes   # tables user, session, account, verification, rateLimit
+node --env-file=.env.local scripts/db-setup.mjs         # table kalima_progress
+```
 
 ## Contrôles
 
@@ -46,8 +53,13 @@ sens et que chaque question a une seule bonne réponse.
 - **Texte coranique** : uniquement Tanzil, résolu par référence `sourate:verset[:mot]`.
 - **Traduction et audio** : Quran.Foundation, à l'exécution, jamais stockés dans le dépôt
   (Developer Terms du 20/11/2026), avec crédit du traducteur et du récitant.
-- **Progression** : `localStorage` versionné, validé par Zod, export et import JSON.
-  Aucun compte pour l'instant (voir la feuille de route dans `docs/REFONTE.md`).
+- **Progression** : `localStorage` versionné, validé par Zod, export et import JSON. « Local d'abord » :
+  l'application marche sans compte.
+- **Comptes (facultatifs)** : Better Auth 1.7 (e-mail + mot de passe, Google si configuré), données
+  dans Neon Postgres. À la connexion, la progression de l'appareil et celle du compte sont **fusionnées**
+  (`mergeStates`, testée) : rien n'est perdu ; ensuite chaque changement est envoyé après 2,5 s.
+  Le serveur fusionne aussi, donc deux appareils ne s'écrasent pas. Suppression de compte en un clic
+  (mot de passe demandé, progression en ligne effacée en cascade).
 - **Répétition espacée** : FSRS-7 (`ts-fsrs`), une carte par lettre, signe, règle, mot et verset.
 
 ## Relecture du contenu
