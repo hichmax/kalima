@@ -158,6 +158,15 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
     }
   };
 
+  /** Aller à un verset : pendant l'écoute, la lecture repart de là ; à l'arrêt, « Reprendre » partira de là. */
+  const seek = (v: number) => {
+    const target = { v: clamp(v, from, to), k: 0, r: position?.r ?? 0 };
+    queued.current = null;
+    setWaitingWord(null);
+    if (running) void start(target);
+    else setPosition(target);
+  };
+
   const changeSurah = (n: number) => {
     stop();
     setSurah(n);
@@ -265,10 +274,11 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
           position={position}
           running={running}
           currentSrc={position ? media.get(position.v)?.audio ?? null : null}
+          onSeek={seek}
         />
 
         <div className="player-controls">
-          <button type="button" className="btn icon" aria-label="Verset précédent" disabled={running || currentV <= from} onClick={() => setPosition({ v: currentV - 1, k: 0, r: 0 })}>
+          <button type="button" className="btn icon" aria-label="Verset précédent" disabled={currentV <= from} onClick={() => seek(currentV - 1)}>
             <SkipBack weight="fill" aria-hidden="true" />
           </button>
           {running ? (
@@ -284,7 +294,7 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
               <Play weight="fill" aria-hidden="true" /> Lancer
             </button>
           )}
-          <button type="button" className="btn icon" aria-label="Verset suivant" disabled={running || currentV >= to} onClick={() => setPosition({ v: currentV + 1, k: 0, r: 0 })}>
+          <button type="button" className="btn icon" aria-label="Verset suivant" disabled={currentV >= to} onClick={() => seek(currentV + 1)}>
             <SkipForward weight="fill" aria-hidden="true" />
           </button>
         </div>

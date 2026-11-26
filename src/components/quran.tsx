@@ -3,6 +3,8 @@
 import { Eye, Pause, Play, SpeakerSimpleHigh } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { QuranWord } from "@/lib/quran-types";
+import { tajweedVerse } from "@/lib/tajweed";
+import { TajweedWord } from "@/components/tajweed-word";
 import { player, usePlayer } from "@/lib/recitation-client";
 
 /** Affiche des mots du Coran (Tanzil, verbatim). `focus` = mots mis en valeur (1-based). */
@@ -24,6 +26,7 @@ export function QuranText({
   onWord?: (index: number) => void;
   className?: string;
 }) {
+  const colored = !hidden || hidden === "none" ? tajweedVerse(words.map((w) => w.ar)) : null;
   return (
     <p className={`quran ${className}`} lang="ar" dir="rtl" style={size ? { fontSize: size } : undefined}>
       {words.map((word, i) => {
@@ -32,7 +35,7 @@ export function QuranText({
         const text = hidden === "all" ? maskWord(word.ar, 0) : hidden === "hint" ? maskWord(word.ar, 1) : word.ar;
         const content = (
           <>
-            {text}
+            {colored ? <TajweedWord segments={colored[i]} /> : text}
             {word.stop && hidden !== "all" ? <span className="stop">{` ${word.stop}`}</span> : null}
           </>
         );

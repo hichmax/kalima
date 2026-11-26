@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { QuranLine } from "@/components/quran-static";
 import { ReaderControls, VerseExtras, WordStudy } from "@/components/reader";
 import { surahPhonetics } from "@/lib/phonetics";
+import { TajweedLegend } from "@/components/tajweed-legend";
+import { TajweedPainter } from "@/components/tajweed-painter";
 import { getSurahMeta, loadSurah, surahIndex, tanzilNotice } from "@/lib/quran-data";
 import { wordsToText } from "@/lib/quran-types";
 
@@ -39,6 +41,8 @@ export default async function SurahPage({ params }: { params: Promise<{ sourate:
       </header>
 
       <ReaderControls surah={n} ayas={meta.ayas} />
+      <TajweedLegend />
+      <TajweedPainter />
       {phonetics.some((p) => p.auto) ? (
         <p className="faint phonetic-note">
           Phonétique de cette sourate : transcription automatique, une aide à la lecture. L&apos;écoute de la récitation prime.

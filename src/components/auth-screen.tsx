@@ -196,9 +196,10 @@ export function AuthScreen({
     <div className="auth">
       <motion.div className="auth-backdrop" aria-hidden="true" style={reduce ? undefined : { x: vx, y: vy }}>
         <video ref={videoRef} className="auth-video" muted loop playsInline autoPlay preload="auto" poster="/media/desert-poster.webp" tabIndex={-1}>
-          <source src="/media/desert-1440.webm" type="video/webm" media="(min-width: 800px)" />
-          <source src="/media/desert-1440.mp4" type="video/mp4" media="(min-width: 800px)" />
-          <source src="/media/desert-720.mp4" type="video/mp4" />
+<source src="/media/desert-portrait.webm" type="video/webm" media="(orientation: portrait)" />
+          <source src="/media/desert-portrait.mp4" type="video/mp4" media="(orientation: portrait)" />
+          <source src="/media/desert-1920.webm" type="video/webm" />
+          <source src="/media/desert-1920.mp4" type="video/mp4" />
         </video>
       </motion.div>
       <div className="auth-veil" aria-hidden="true" />

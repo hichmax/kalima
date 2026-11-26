@@ -29,8 +29,10 @@ export const stateSchema = z.object({
       theme: z.enum(["nuit", "papier"]).default("nuit"),
       track: z.enum(["debutant", "lecteur"]).default("debutant"),
       onboarded: z.boolean().default(false),
+      /** couleurs du tajwīd sur le texte coranique (mushaf coloré) */
+      tajweed: z.boolean().default(true),
     })
-    .default({ phonetic: "auto", arabicScale: 1, theme: "nuit", track: "debutant", onboarded: false }),
+    .default({ phonetic: "auto", arabicScale: 1, theme: "nuit", track: "debutant", onboarded: false, tajweed: true }),
   days: z.record(z.string(), dayProgressSchema).default({}),
   cards: z.record(z.string(), storedCardSchema).default({}),
   activity: z

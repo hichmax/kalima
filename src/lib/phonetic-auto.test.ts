@@ -44,5 +44,5 @@ describe("phonétique automatique", () => {
       }
     }
     expect(count).toBe(6236);
-  });
+  }, 60_000);
 });

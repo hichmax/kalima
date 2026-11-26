@@ -46,7 +46,7 @@ export const viewport: Viewport = {
  * Applique le thème et la taille du texte arabe avant le premier rendu (pas de flash).
  * Lit uniquement la clé locale de Kalima ; aucun appel réseau.
  */
-const preferencesScript = `try{var s=JSON.parse(localStorage.getItem("kalima:v2")||"null");var p=s&&s.settings;if(p){if(p.theme==="papier")document.documentElement.dataset.theme="papier";if(p.arabicScale)document.documentElement.style.setProperty("--arabic-scale",String(p.arabicScale));}}catch(e){}`;
+const preferencesScript = `try{var s=JSON.parse(localStorage.getItem("kalima:v2")||"null");var p=s&&s.settings;if(p){if(p.theme==="papier")document.documentElement.dataset.theme="papier";if(p.arabicScale)document.documentElement.style.setProperty("--arabic-scale",String(p.arabicScale));if(p.tajweed===false)document.documentElement.dataset.tajweed="off";}}catch(e){}`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

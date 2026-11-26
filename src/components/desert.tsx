@@ -36,6 +36,7 @@ export function DesertStage({ children }: { children: ReactNode }) {
     reduce.addEventListener("change", syncPlayback);
 
     let frame = 0;
+    let lastKey = "";
     const draw = () => {
       frame = requestAnimationFrame(draw);
       if (document.hidden) return;
@@ -44,6 +45,11 @@ export function DesertStage({ children }: { children: ReactNode }) {
       const source: CanvasImageSource | null =
         video && video.readyState >= 2 ? video : poster.complete && poster.naturalWidth ? poster : null;
       if (!source) return;
+      // Ne redessine que si l'image de la vidéo, le défilement ou la taille ont changé :
+      // sur téléphone, redessiner 60 à 120 fois par seconde pour rien faisait ramer la page.
+      const key = `${source === video ? video.currentTime : "poster"}|${window.scrollY}|${vw}x${vh}`;
+      if (key === lastKey) return;
+      lastKey = key;
       const sw = source instanceof HTMLVideoElement ? source.videoWidth : (source as HTMLImageElement).naturalWidth;
       const sh = source instanceof HTMLVideoElement ? source.videoHeight : (source as HTMLImageElement).naturalHeight;
       if (!sw || !sh) return;
@@ -51,7 +57,7 @@ export function DesertStage({ children }: { children: ReactNode }) {
       const scale = Math.max(vw / sw, vh / sh);
       const offsetX = (vw - sw * scale) / 2;
       const offsetY = (vh - sh * scale) / 2;
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
       for (const canvas of registry.canvases) {
         const rect = canvas.getBoundingClientRect();
@@ -98,9 +104,10 @@ export function DesertStage({ children }: { children: ReactNode }) {
         aria-hidden="true"
         tabIndex={-1}
       >
-        <source src="/media/desert-720.mp4" type="video/mp4" media="(max-width: 760px)" />
-        <source src="/media/desert-1440.webm" type="video/webm" />
-        <source src="/media/desert-1440.mp4" type="video/mp4" />
+<source src="/media/desert-portrait.webm" type="video/webm" media="(orientation: portrait)" />
+        <source src="/media/desert-portrait.mp4" type="video/mp4" media="(orientation: portrait)" />
+        <source src="/media/desert-1920.webm" type="video/webm" />
+        <source src="/media/desert-1920.mp4" type="video/mp4" />
       </video>
       {children}
     </DesertContext.Provider>

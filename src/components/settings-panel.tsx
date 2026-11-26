@@ -4,6 +4,7 @@ import { Segmented } from "@/components/segmented";
 import { DownloadSimple, UploadSimple } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import { QuranText } from "@/components/quran";
+import { TajweedLegend } from "@/components/tajweed-legend";
 import type { QuranWord } from "@/lib/quran-types";
 import { applyAppearance } from "@/lib/appearance";
 import { PHONETIC_LEGEND } from "@/content/alphabet";
@@ -90,6 +91,21 @@ export function SettingsPanel({ preview }: { preview: QuranWord[] }) {
           <input type="range" min={0.8} max={1.8} step={0.1} value={settings.arabicScale} onChange={(e) => set({ arabicScale: Number(e.target.value) })} />
         </label>
         <QuranText words={preview} />
+      </section>
+
+      <section className="glass card stack" style={{ "--gap": "12px" } as React.CSSProperties}>
+        <h2 className="h3">Couleurs du tajwīd</h2>
+        <p className="muted">Comme un mushaf coloré : les prolongations, la nasalisation, la qalqala et les lettres muettes en couleur.</p>
+        <Segmented
+          label="Couleurs du tajwīd"
+          value={settings.tajweed ? "on" : "off"}
+          onChange={(value) => set({ tajweed: value === "on" })}
+          options={[
+            { value: "on", label: "Activées" },
+            { value: "off", label: "Texte simple" },
+          ]}
+        />
+        <TajweedLegend open />
       </section>
 
       <section className="glass card stack" style={{ "--gap": "12px" } as React.CSSProperties}>
