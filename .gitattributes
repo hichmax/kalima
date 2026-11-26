@@ -1,0 +1,9 @@
+# Fins de ligne LF partout : le texte Tanzil est contrôlé par SHA-256 et ne doit jamais être converti.
+* text=auto eol=lf
+content/sources/** -text
+src/generated/** -text
+*.woff2 binary
+*.mp4 binary
+*.webm binary
+*.webp binary
+*.jpg binary
