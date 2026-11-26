@@ -1,7 +1,7 @@
 "use client";
 
 import { Segmented } from "@/components/segmented";
-import { Pause, Play, Repeat, SkipBack, SkipForward } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, Pause, Play, Repeat, SkipBack, SkipForward } from "@phosphor-icons/react";
 import { motion, useReducedMotion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -69,13 +69,15 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
     setRunning(false);
   };
 
-  const start = async () => {
+  /** Lance la répétition depuis `at` (par défaut : début de la plage). Reprend verset, répétition et tour. */
+  const start = async (at: { v: number; k: number; r: number } = { v: from, k: 0, r: 0 }) => {
     const token = ++runToken.current;
     setRunning(true);
     const alive = () => runToken.current === token;
-    for (let r = 0; rangeRepeat === 0 || r < rangeRepeat; r += 1) {
-      for (let v = from; v <= to; v += 1) {
-        for (let k = 0; k < verseRepeat; k += 1) {
+    const startV = clamp(at.v, from, to);
+    for (let r = at.r; rangeRepeat === 0 || r < rangeRepeat; r += 1) {
+      for (let v = r === at.r ? startV : from; v <= to; v += 1) {
+        for (let k = r === at.r && v === startV ? Math.min(at.k, verseRepeat - 1) : 0; k < verseRepeat; k += 1) {
           if (!alive()) return;
           const src = media.get(v)?.audio;
           if (!src) {
@@ -90,7 +92,10 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
         }
       }
     }
-    if (alive()) setRunning(false);
+    if (alive()) {
+      setRunning(false);
+      setPosition(null); // terminé : la prochaine écoute repart du début
+    }
   };
 
   const changeSurah = (n: number) => {
@@ -187,7 +192,11 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
           </button>
           {running ? (
             <button type="button" className="btn primary play-main" onClick={stop}>
-              <Pause weight="fill" aria-hidden="true" /> Arrêter
+              <Pause weight="fill" aria-hidden="true" /> Pause
+            </button>
+          ) : position ? (
+            <button type="button" className="btn primary play-main" disabled={!available} onClick={() => void start(position)}>
+              <Play weight="fill" aria-hidden="true" /> Reprendre (v. {position.v})
             </button>
           ) : (
             <button type="button" className="btn primary play-main" disabled={!available} onClick={() => void start()}>
@@ -198,6 +207,19 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
             <SkipForward weight="fill" aria-hidden="true" />
           </button>
         </div>
+        {position && !running ? (
+          <button
+            type="button"
+            className="btn small ghost restart"
+            disabled={!available}
+            onClick={() => {
+              setPosition(null);
+              void start();
+            }}
+          >
+            <ArrowCounterClockwise aria-hidden="true" /> Depuis le début
+          </button>
+        ) : null}
         {unavailableMessage(recitation) ? (
           <p className="tip tip-warn" role="note">
             {unavailableMessage(recitation)}

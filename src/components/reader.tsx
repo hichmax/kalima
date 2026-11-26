@@ -1,13 +1,16 @@
 "use client";
 
 import { Segmented } from "@/components/segmented";
-import { MagnifyingGlass, Pause, Play, Repeat, X } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, FastForward, MagnifyingGlass, Pause, Play, Repeat, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { SurahMeta } from "@/lib/quran-types";
 import { player, unavailableMessage, usePlayer, useRecitation, useStopOnUnmount } from "@/lib/recitation-client";
 import type { WordPart } from "@/lib/morphology";
+
+/** Événement « lire la sourate à partir de ce verset », émis par les boutons de verset. */
+const READ_FROM_EVENT = "kalima:read-from";
 
 // ---------------------------------------------------------------- liste des sourates
 export function SurahIndex({ surahs }: { surahs: SurahMeta[] }) {
@@ -53,33 +56,78 @@ export function ReaderControls({ surah, ayas }: { surah: number; ayas: number })
   useStopOnUnmount();
   const recitation = useRecitation(surah);
   const state = usePlayer();
+  /** Verset en cours (ou où l'on s'est arrêté) de la lecture continue. */
   const [from, setFrom] = useState<number | null>(null);
+  const [continuous, setContinuous] = useState(false);
 
   const playFrom = (v: number) => {
     const src = recitation?.verses?.find((x) => x.v === v)?.audio;
     if (!src) return;
     setFrom(v);
+    setContinuous(true);
     document.querySelector(`[data-verse="${v}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
-    void player.play(src, { onEnd: () => (v < ayas ? playFrom(v + 1) : setFrom(null)) });
+    void player.play(src, {
+      onEnd: () => {
+        if (v < ayas) playFrom(v + 1);
+        else {
+          setFrom(null);
+          setContinuous(false);
+        }
+      },
+    });
   };
+
+  // « Lire à partir d'ici », depuis le bouton d'un verset.
+  const playFromRef = useRef(playFrom);
+  useEffect(() => {
+    playFromRef.current = playFrom;
+  });
+  useEffect(() => {
+    const onReadFrom = (event: Event) => {
+      const detail = (event as CustomEvent<{ surah: number; verse: number }>).detail;
+      if (detail?.surah === surah) playFromRef.current(detail.verse);
+    };
+    window.addEventListener(READ_FROM_EVENT, onReadFrom);
+    return () => window.removeEventListener(READ_FROM_EVENT, onReadFrom);
+  }, [surah]);
 
   useEffect(() => {
     document.querySelectorAll(".verse-item.playing").forEach((el) => el.classList.remove("playing"));
-    if (from && state.playing) document.querySelector(`[data-verse="${from}"]`)?.classList.add("playing");
-  }, [from, state.playing]);
+    if (from && state.playing && continuous) document.querySelector(`[data-verse="${from}"]`)?.classList.add("playing");
+  }, [from, state.playing, continuous]);
 
   if (recitation && !recitation.available) {
     return <p className="tip tip-warn">{unavailableMessage(recitation)}</p>;
   }
+  // La lecture continue n'est « en cours » que si c'est bien le verset de la chaîne qui joue
+  // (un verset écouté seul ou en boucle interrompt la chaîne, qu'on peut ensuite reprendre).
+  const chainSrc = from ? recitation?.verses?.find((x) => x.v === from)?.audio : null;
+  const playingContinuous = state.playing && continuous && state.src === chainSrc && !state.loop;
   return (
     <div className="reader-controls glass thin">
-      {state.playing ? (
-        <button type="button" className="btn small" onClick={() => player.stop()}>
-          <Pause weight="fill" aria-hidden="true" /> Pause
+      {playingContinuous ? (
+        <button
+          type="button"
+          className="btn small"
+          onClick={() => {
+            player.stop();
+            setContinuous(false);
+          }}
+        >
+          <Pause weight="fill" aria-hidden="true" /> Pause (v. {from})
         </button>
+      ) : from ? (
+        <>
+          <button type="button" className="btn small primary" onClick={() => playFrom(from)} disabled={!recitation}>
+            <Play weight="fill" aria-hidden="true" /> Reprendre (v. {from})
+          </button>
+          <button type="button" className="btn small" onClick={() => playFrom(1)} disabled={!recitation}>
+            <ArrowCounterClockwise aria-hidden="true" /> Recommencer
+          </button>
+        </>
       ) : (
-        <button type="button" className="btn small primary" onClick={() => playFrom(from ?? 1)} disabled={!recitation}>
-          <Play weight="fill" aria-hidden="true" /> {from ? `Reprendre (v. ${from})` : "Écouter la sourate"}
+        <button type="button" className="btn small primary" onClick={() => playFrom(1)} disabled={!recitation}>
+          <Play weight="fill" aria-hidden="true" /> Écouter la sourate
         </button>
       )}
       <Segmented size="sm" label="Vitesse de récitation" value={state.rate} onChange={(rate) => player.setRate(rate)} options={[0.75, 1, 1.25].map((rate) => ({ value: rate, label: rate === 1 ? "×1" : `×${rate}` }))} />
@@ -100,8 +148,16 @@ export function VerseExtras({ surah, verse, phonetic }: { surah: number; verse: 
       {media?.translation ? <p className="translation">{media.translation}</p> : null}
       {media?.audio ? (
         <div className="row" style={{ "--gap": "6px" } as React.CSSProperties}>
-          <button type="button" className="btn small ghost" onClick={() => void player.play(media.audio!)} aria-label={`Écouter le verset ${verse}`}>
-            <Play aria-hidden="true" /> Écouter
+          <button type="button" className="btn small ghost" onClick={() => void player.play(media.audio!)} aria-label={`Écouter le verset ${verse} seul`}>
+            <Play aria-hidden="true" /> Ce verset
+          </button>
+          <button
+            type="button"
+            className="btn small ghost"
+            onClick={() => window.dispatchEvent(new CustomEvent(READ_FROM_EVENT, { detail: { surah, verse } }))}
+            aria-label={`Lire la sourate à partir du verset ${verse}`}
+          >
+            <FastForward aria-hidden="true" /> À partir d&apos;ici
           </button>
           <button
             type="button"

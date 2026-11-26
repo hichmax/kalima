@@ -3026,3 +3026,7 @@ p {
     font-size: 0.92rem;
   }
 }
+
+.restart {
+  justify-self: center;
+}
