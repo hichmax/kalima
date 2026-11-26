@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getChapterMedia, isQuranFoundationConfigured } from "@/lib/quran-foundation";
+import { getChapterMedia, isQuranFoundationConfigured, PRELIVE_CHAPTERS, quranFoundationEnvironment } from "@/lib/quran-foundation";
 
 /**
  * Traduction des sens et récitation d'une sourate, relayées depuis Quran.Foundation.
@@ -13,6 +13,9 @@ export async function GET(_request: Request, context: { params: Promise<{ surah:
   }
   if (!isQuranFoundationConfigured()) {
     return NextResponse.json({ available: false, reason: "not-configured" });
+  }
+  if (quranFoundationEnvironment() === "prelive" && !PRELIVE_CHAPTERS.includes(n)) {
+    return NextResponse.json({ available: false, reason: "prelive-limited" });
   }
   try {
     const verses = await getChapterMedia(n);

@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Phonetic, QuranText } from "@/components/quran";
 import type { QuranWord, SurahMeta } from "@/lib/quran-types";
-import { player, usePlayer, useRecitation, useStopOnUnmount } from "@/lib/recitation-client";
+import { player, unavailableMessage, usePlayer, useRecitation, useStopOnUnmount } from "@/lib/recitation-client";
 
 type SurahPayload = { n: number; verses: Array<{ v: number; w: QuranWord[]; ph: string | null }> };
 const textCache = new Map<number, Promise<SurahPayload>>();
@@ -198,10 +198,9 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
             <SkipForward weight="fill" aria-hidden="true" />
           </button>
         </div>
-        {recitation && !available ? (
+        {unavailableMessage(recitation) ? (
           <p className="tip tip-warn" role="note">
-            La récitation n&apos;est pas disponible ici : les identifiants Quran.Foundation ne sont pas configurés pour cet
-            environnement. Le texte reste consultable.
+            {unavailableMessage(recitation)}
           </p>
         ) : null}
         <p className="faint">

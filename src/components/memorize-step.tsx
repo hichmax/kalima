@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { Phonetic, PlayButton, QuranText } from "@/components/quran";
 import type { StudyVerse } from "@/lib/learning-data";
 import { recordGrades } from "@/lib/progress";
-import { player, usePlayer, useRecitations, useStopOnUnmount } from "@/lib/recitation-client";
+import { player, unavailableMessage, usePlayer, useRecitations, useStopOnUnmount } from "@/lib/recitation-client";
 import type { Grade } from "@/lib/srs";
 
 type Stage = "ecouter" | "repeter" | "masquer" | "evaluer";
@@ -85,8 +85,8 @@ export function MemorizeStep({
 
       {audioAvailable === false ? (
         <p className="tip tip-warn" role="note">
-          La récitation n&apos;est pas disponible ici (service Quran.Foundation non configuré ou injoignable). Utilise
-          l&apos;application de ton choix pour écouter, puis reviens réciter.
+          {unavailableMessage(first ?? null)} En attendant, écoute ces versets dans l&apos;application de ton choix, puis
+          reviens réciter.
         </p>
       ) : null}
 

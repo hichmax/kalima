@@ -13,19 +13,31 @@ import { z } from "zod";
  */
 
 const CACHE_SECONDS = 86_400;
-const VERSE_AUDIO_BASE = "https://verses.quran.com/";
+// Les URL audio des versets sont absolues (verses.quran.foundation) ; ces bases ne servent
+// qu'aux chemins relatifs (audio mot à mot : « wbw/001_001_001.mp3 »).
+const VERSE_AUDIO_BASE = "https://verses.quran.foundation/";
 const WORD_AUDIO_BASE = "https://audio.qurancdn.com/";
 
+/** Les nouvelles applications QF utilisent des scopes granulaires (doc consultée le 26/11/2026). */
+const GRANULAR_SCOPES = "content.quran.read content.translations.read content.audio.read";
+const LEGACY_SCOPE = "content";
+/** Un User-Agent explicite : sans lui, la passerelle peut répondre 403 « error code: 1010 ». */
+const USER_AGENT = "Kalima/2.0 (+https://github.com/hichmax/kalima)";
+
 const environmentSchema = z.enum(["prelive", "production"]);
+export type QfEnvironment = z.infer<typeof environmentSchema>;
 
 function getConfig() {
-  const clientId = process.env.QF_CLIENT_ID;
-  const clientSecret = process.env.QF_CLIENT_SECRET;
+  const clientId = process.env.QF_CLIENT_ID?.trim();
+  const clientSecret = process.env.QF_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) return null;
-  const environment = environmentSchema.catch("prelive").parse(process.env.QF_ENV);
+  const environment = environmentSchema.catch("prelive").parse(process.env.QF_ENV?.trim());
   return {
     clientId,
     clientSecret,
+    environment,
+    /** Forcer un scope précis (sinon : granulaires, puis repli sur « content »). */
+    scope: process.env.QF_SCOPE?.trim() || null,
     translationId: Number(process.env.QF_TRANSLATION_ID || 31),
     recitationId: Number(process.env.QF_RECITATION_ID || 7),
     authBase: environment === "production" ? "https://oauth2.quran.foundation" : "https://prelive-oauth2.quran.foundation",
@@ -34,31 +46,55 @@ function getConfig() {
 }
 
 export const isQuranFoundationConfigured = () => getConfig() !== null;
+export const quranFoundationEnvironment = (): QfEnvironment | null => getConfig()?.environment ?? null;
+
+/** L'environnement de test (prelive) ne contient que les sourates 1 et 2. */
+export const PRELIVE_CHAPTERS = [1, 2];
 
 let tokenCache: { token: string; expiresAt: number } | null = null;
+let workingScope: string | null = null;
+
+async function requestToken(config: NonNullable<ReturnType<typeof getConfig>>, scope: string) {
+  const basic = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString("base64");
+  return fetch(`${config.authBase}/oauth2/token`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${basic}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": USER_AGENT,
+    },
+    body: new URLSearchParams({ grant_type: "client_credentials", scope }).toString(),
+    cache: "no-store",
+  });
+}
 
 async function getAccessToken(force = false) {
   const config = getConfig();
   if (!config) throw new Error("Quran.Foundation non configuré");
   if (!force && tokenCache && tokenCache.expiresAt > Date.now() + 60_000) return tokenCache.token;
-  const basic = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString("base64");
-  const response = await fetch(`${config.authBase}/oauth2/token`, {
-    method: "POST",
-    headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: "grant_type=client_credentials&scope=content",
-    cache: "no-store",
-  });
-  if (!response.ok) throw new Error(`Authentification Quran.Foundation refusée (${response.status})`);
-  const body = z.object({ access_token: z.string(), expires_in: z.number().default(3600) }).parse(await response.json());
-  tokenCache = { token: body.access_token, expiresAt: Date.now() + body.expires_in * 1000 };
-  return body.access_token;
+
+  const candidates = config.scope ? [config.scope] : workingScope ? [workingScope] : [GRANULAR_SCOPES, LEGACY_SCOPE];
+  let lastStatus = 0;
+  for (const scope of candidates) {
+    const response = await requestToken(config, scope);
+    if (response.ok) {
+      const body = z.object({ access_token: z.string(), expires_in: z.number().default(3600) }).parse(await response.json());
+      workingScope = scope;
+      tokenCache = { token: body.access_token, expiresAt: Date.now() + body.expires_in * 1000 };
+      return body.access_token;
+    }
+    lastStatus = response.status;
+    // invalid_scope (400) : on essaie le scope suivant ; toute autre erreur est définitive.
+    if (response.status !== 400) break;
+  }
+  throw new Error(`Authentification Quran.Foundation refusée (${lastStatus})`);
 }
 
 async function qfFetch(path: string, retry = true): Promise<unknown> {
   const config = getConfig();
   if (!config) throw new Error("Quran.Foundation non configuré");
   const response = await fetch(`${config.apiBase}${path}`, {
-    headers: { "x-auth-token": await getAccessToken(), "x-client-id": config.clientId },
+    headers: { "x-auth-token": await getAccessToken(), "x-client-id": config.clientId, "User-Agent": USER_AGENT },
     next: { revalidate: CACHE_SECONDS },
   });
   if (response.status === 401 && retry) {
@@ -67,6 +103,12 @@ async function qfFetch(path: string, retry = true): Promise<unknown> {
   }
   if (!response.ok) throw new Error(`Requête Quran.Foundation échouée (${response.status})`);
   return response.json();
+}
+
+/** Réservé aux tests. */
+export function __resetQuranFoundationForTests() {
+  tokenCache = null;
+  workingScope = null;
 }
 
 const wordSchema = z.object({

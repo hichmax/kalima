@@ -43,9 +43,9 @@ export const sources: SourceRef[] = [
     id: "hamidullah",
     kind: "texte",
     label: "Muhammad Hamidullah — traduction des sens en français",
-    detail: "Révision du Complexe du Roi Fahd, via Quran.Foundation (ressource 31). Une traduction est une interprétation, pas le Coran.",
-    license: "Œuvre protégée, diffusée par Quran.Foundation",
-    verified: false,
+    detail: "Révision du Complexe du Roi Fahd, via Quran.Foundation (ressource 31, vérifiée le 26/11/2026). Une traduction est une interprétation, pas le Coran.",
+    license: "Œuvre protégée, diffusée par Quran.Foundation (droits de réutilisation à confirmer)",
+    verified: true,
   },
   {
     id: "alafasy",

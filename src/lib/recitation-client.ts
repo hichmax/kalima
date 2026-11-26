@@ -9,6 +9,21 @@ export interface RecitationData {
   verses?: Array<{ v: number; translation: string | null; audio: string | null; words: Array<string | null> }>;
 }
 
+/** Explication lisible de l'indisponibilité de l'audio et de la traduction. */
+export function unavailableMessage(data: RecitationData | null): string | null {
+  if (!data || data.available) return null;
+  switch (data.reason) {
+    case "not-configured":
+      return "Récitation et traduction indisponibles ici : les identifiants Quran.Foundation ne sont pas configurés pour cet environnement. Le texte reste consultable.";
+    case "prelive-limited":
+      return "Les identifiants Quran.Foundation de test (prelive) ne donnent accès qu'aux sourates 1 et 2. Il faut des identifiants de production pour les autres.";
+    case "network":
+      return "Impossible de joindre le serveur : vérifie ta connexion.";
+    default:
+      return "Récitation et traduction momentanément indisponibles (Quran.Foundation ne répond pas). Réessaie plus tard.";
+  }
+}
+
 const cache = new Map<number, Promise<RecitationData>>();
 
 export function fetchRecitation(surah: number): Promise<RecitationData> {

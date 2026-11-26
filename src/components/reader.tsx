@@ -6,7 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { SurahMeta } from "@/lib/quran-types";
-import { player, usePlayer, useRecitation, useStopOnUnmount } from "@/lib/recitation-client";
+import { player, unavailableMessage, usePlayer, useRecitation, useStopOnUnmount } from "@/lib/recitation-client";
 import type { WordPart } from "@/lib/morphology";
 
 // ---------------------------------------------------------------- liste des sourates
@@ -69,7 +69,7 @@ export function ReaderControls({ surah, ayas }: { surah: number; ayas: number })
   }, [from, state.playing]);
 
   if (recitation && !recitation.available) {
-    return <p className="faint">Récitation et traduction indisponibles pour le moment (service Quran.Foundation non joignable).</p>;
+    return <p className="tip tip-warn">{unavailableMessage(recitation)}</p>;
   }
   return (
     <div className="reader-controls glass thin">
