@@ -1,20 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Kalima">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1254 1254" role="img" aria-label="Kalima">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#140d2b"/>
-      <stop offset="0.7" stop-color="#2c1a57"/>
-      <stop offset="1" stop-color="#5a2f6e"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1254" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#130A33"/>
+      <stop offset="1" stop-color="#2B1462"/>
     </linearGradient>
-    <linearGradient id="dune" x1="53" y1="150" x2="470" y2="362" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#f4e6cf"/>
-      <stop offset="0.55" stop-color="#e9a3c9"/>
-      <stop offset="1" stop-color="#8d74ff"/>
+    <linearGradient id="stroke" x1="150" y1="620" x2="1090" y2="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F9DFB0"/>
+      <stop offset="0.38" stop-color="#F78ED2"/>
+      <stop offset="0.74" stop-color="#B57CF8"/>
+      <stop offset="1" stop-color="#7C62F7"/>
     </linearGradient>
+    <radialGradient id="glow" cx="627" cy="885" r="95" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#B99BFF" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#B99BFF" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="512" height="512" rx="120" fill="url(#sky)"/>
-  <g transform="translate(0 4)">
-    <path d="M53 187c13 102 83 156 207 156 122 0 188-57 198-177" fill="none" stroke="url(#dune)" stroke-width="44" stroke-linecap="round"/>
-    <path d="M458 166c1-26-3-49-14-70" fill="none" stroke="#8d74ff" stroke-width="44" stroke-linecap="round"/>
-    <path d="M256 372l11 31 31 11-31 11-11 31-11-31-31-11 31-11z" fill="#fff"/>
-  </g>
+  <rect width="1254" height="1254" rx="280" fill="url(#bg)"/>
+  <path d="M150 715C195 610 280 520 345 520C400 520 430 555 500 600C560 640 620 672 700 672C860 672 1010 600 1050 500C1062 470 1070 440 1076 410C1090 470 1100 560 1070 620C1010 730 860 782 700 782C560 782 470 740 390 700C360 685 300 660 250 660C210 660 175 685 150 715Z" fill="url(#stroke)"/>
+  <circle cx="627" cy="885" r="95" fill="url(#glow)"/>
+  <path d="M627 822C634 860 650 877 688 885C650 893 634 910 627 947C620 910 604 893 566 885C604 877 620 860 627 822Z" fill="#F3EEFF"/>
 </svg>

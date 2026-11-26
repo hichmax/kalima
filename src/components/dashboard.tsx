@@ -76,6 +76,9 @@ export function Dashboard() {
         <Counter value={knownCount(state, "lemma")} label="mots appris" icon={<Sparkle weight="duotone" />} />
         <Counter value={knownCount(state, "verse")} label="versets mémorisés" icon={<BookOpenText weight="duotone" />} />
       </section>
+      <Link href="/progression" className="btn small ghost progress-link">
+        Voir ma progression en graphiques <ArrowRight aria-hidden="true" />
+      </Link>
 
       <section className="glass card stack" style={{ "--gap": "14px" } as React.CSSProperties}>
         <div className="row between">

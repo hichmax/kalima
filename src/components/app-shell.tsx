@@ -4,6 +4,7 @@ import {
   BookOpenText,
   Books,
   CalendarDots,
+  ChartLineUp,
   Cards,
   GearSix,
   GraduationCap,
@@ -19,6 +20,7 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/r
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { AmbientBackdrop } from "@/components/ambient-backdrop";
 import { LogoMark } from "@/components/logo";
 
 /** Les cinq destinations du quotidien (barre du bas sur mobile). */
@@ -33,6 +35,7 @@ const NAV = [
 /** Le reste, rangé dans « Plus » : bibliothèque, transparence, réglages. */
 const MORE = [
   { href: "/", label: "Accueil du site", detail: "La présentation de Kalima", icon: House },
+  { href: "/progression", label: "Ma progression", detail: "Graphiques : régularité, mémoire, couverture", icon: ChartLineUp },
   { href: "/alphabet", label: "L'alphabet", detail: "Apprendre, s'entraîner, réviser les lettres", icon: TextAa },
   { href: "/mots", label: "Les mots", detail: "Les 300 mots les plus fréquents", icon: Books },
   { href: "/lecons", label: "Toutes les leçons", detail: "Refaire une leçon à tout moment", icon: GraduationCap },
@@ -57,7 +60,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <div className="app-backdrop" aria-hidden="true" />
+      <AmbientBackdrop />
       <header className="topbar">
         <div className="container">
           <div className="topbar-inner glass thin">
