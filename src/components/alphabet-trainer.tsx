@@ -8,6 +8,7 @@ import { alphabet, CONFUSABLE_SOUNDS, MAKHRAJ_ZONES, type ArabicLetter } from "@
 import type { Practice } from "@/content/types";
 import { ExerciseRunner, type ExerciseResult } from "@/components/exercise-runner";
 import { QuranText } from "@/components/quran";
+import { LetterListen, LetterRecorder, MuqattaaListen, useRecordingMode } from "@/components/letter-listen";
 import { revealStagger } from "@/lib/anime";
 import { generatePractice, letterForms, seededRandom, shuffle, type Exercise } from "@/lib/exercises";
 import { recordResults, scoreOf } from "@/lib/progress";
@@ -251,6 +252,7 @@ function LetterDetail({ letter, example, audioFor, onClose }: { letter: ArabicLe
   const audio = example ? audioFor(example.ref) : null;
   const w = example ? Number(example.ref.split(":")[2]) : 0;
   const zone = MAKHRAJ_ZONES[letter.zone];
+  const recordingMode = useRecordingMode();
   return (
     <div className="stack" style={{ "--gap": "12px" } as React.CSSProperties}>
       <div className="row between">
@@ -261,6 +263,8 @@ function LetterDetail({ letter, example, audioFor, onClose }: { letter: ArabicLe
       </div>
       <p className="ar letter-hero" lang="ar">{letter.char}</p>
       <p className="muted center">{letter.sound}</p>
+      <LetterListen char={letter.char} name={letter.name} />
+      {recordingMode ? <LetterRecorder char={letter.char} /> : null}
       <div className="forms-row" dir="rtl">
         {(
           [
@@ -297,6 +301,7 @@ function LetterDetail({ letter, example, audioFor, onClose }: { letter: ArabicLe
           </div>
         </div>
       ) : null}
+      <MuqattaaListen char={letter.char} />
       <p className="faint">
         Le son d&apos;une lettre s&apos;apprend à l&apos;oreille : écoute le mot, répète-le, et fais-toi corriger par une personne
         qualifiée.

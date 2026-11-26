@@ -3030,3 +3030,290 @@ p {
 .restart {
   justify-self: center;
 }
+
+/* ---------------------------------------------------------------- écouter une lettre */
+.listen-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.listen-btn {
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  min-height: 118px;
+  padding: 10px 8px;
+  border-radius: 22px;
+  white-space: normal;
+}
+
+.listen-btn svg {
+  color: var(--violet);
+}
+
+.listen-main {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.listen-ar {
+  font-size: calc(2rem * var(--arabic-scale));
+  line-height: 1.8;
+  color: var(--sand);
+}
+
+.listen-ph {
+  font-size: 0.86rem;
+  color: var(--ink-2);
+}
+
+.listen-note {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.listen-note svg {
+  flex: none;
+  margin-top: 3px;
+}
+
+.muqattaa .quran {
+  margin: 0;
+}
+
+.recorder {
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px dashed color-mix(in srgb, var(--warn) 50%, transparent);
+}
+
+.record-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.record-label {
+  min-width: 110px;
+  font-size: 1.3rem;
+  line-height: 1.8;
+  color: var(--sand);
+}
+
+/* ---------------------------------------------------------------- barre de répétition */
+.rp {
+  display: grid;
+  gap: 6px;
+  padding: 6px 4px 2px;
+}
+
+.rp-track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.rp-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #6d4fd8, var(--violet) 45%, var(--dawn));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--violet) 55%, transparent);
+  will-change: transform;
+}
+
+.rp-head {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 35%, #ffffff, #e9dcff 55%, var(--violet));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--violet) 30%, transparent), 0 0 16px rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+.rp-marker {
+  position: absolute;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+
+.rp-dot {
+  position: absolute;
+  left: -7px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: #1a1233;
+  box-shadow: 0 0 10px rgba(155, 135, 255, 0.5);
+}
+
+.rp-marker .rp-ring {
+  position: absolute;
+  left: -9px;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid var(--dawn);
+  pointer-events: none;
+}
+
+.rp-tick {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.rp-labels {
+  position: relative;
+  height: 16px;
+}
+
+.rp-label {
+  position: absolute;
+  translate: -50% 0;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  transition: color 200ms ease;
+}
+
+.rp-label[data-active] {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.rp-rounds {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.rp-round {
+  width: 22px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background-color 300ms ease, width 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rp-round[data-state="current"] {
+  width: 34px;
+  background: var(--violet);
+}
+
+.rp-round[data-state="done"] {
+  background: var(--oasis);
+}
+
+/* ---------------------------------------------------------------- bulles de mots (étude d'un verset) */
+.word-chips {
+  gap: 10px;
+  max-height: 210px;
+  padding: 14px 4px 22px;
+  margin: -6px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  /* Les bulles s'effacent en fondu au lieu d'être coupées net. */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 calc(100% - 26px), transparent 100%);
+}
+
+.word-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.word-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  min-width: 64px;
+  padding: 2px 18px 8px;
+  border-radius: 20px;
+  font-size: calc(1.7rem * var(--arabic-scale));
+  line-height: 2.1;
+  /* Ombre légère : une bulle posée, pas une carte qui flotte. */
+  box-shadow:
+    inset 1px 0 0 rgba(255, 90, 160, 0.2),
+    inset -1px 0 0 rgba(80, 210, 255, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 2px 8px rgba(0, 0, 0, 0.22);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 160ms ease;
+}
+
+.word-chip:hover {
+  transform: translateY(-1px);
+}
+
+.word-chip:active {
+  transform: scale(0.96);
+}
+
+.word-chip[aria-selected="true"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 0 0 3px color-mix(in srgb, var(--violet) 30%, transparent),
+    0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* Les morceaux du mot : même logique, ombre légère, place pour les signes. */
+.part {
+  min-width: 96px;
+  padding: 8px 12px 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Barres de défilement discrètes partout ailleurs. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+html[data-theme="papier"] {
+  scrollbar-color: rgba(27, 22, 40, 0.25) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2) padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.35);
+}

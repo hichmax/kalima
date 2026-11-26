@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Phonetic, QuranText } from "@/components/quran";
+import { RepeatProgress } from "@/components/repeat-progress";
 import type { QuranWord, SurahMeta } from "@/lib/quran-types";
 import { player, unavailableMessage, usePlayer, useRecitation, useStopOnUnmount } from "@/lib/recitation-client";
 
@@ -117,8 +118,6 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
 
   const available = recitation?.available;
   const spring = reduce ? { duration: 0.1 } : { type: "spring" as const, bounce: 0, duration: 0.45 };
-  const total = (to - from + 1) * verseRepeat;
-  const done = position ? (position.v - from) * verseRepeat + position.k + 1 : 0;
 
   return (
     <div className="stack" style={{ "--gap": "16px" } as React.CSSProperties}>
@@ -182,9 +181,15 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
         {currentVerse?.ph ? <Phonetic text={currentVerse.ph} mode="tap" /> : null}
         {media.get(currentV)?.translation ? <p className="translation">{media.get(currentV)?.translation}</p> : null}
 
-        <div className="bar" aria-hidden="true">
-          <motion.span initial={false} animate={{ width: `${total ? (done / total) * 100 : 0}%` }} transition={spring} />
-        </div>
+        <RepeatProgress
+          from={from}
+          to={to}
+          verseRepeat={verseRepeat}
+          rangeRepeat={rangeRepeat}
+          position={position}
+          running={running}
+          currentSrc={position ? media.get(position.v)?.audio ?? null : null}
+        />
 
         <div className="player-controls">
           <button type="button" className="btn icon" aria-label="Verset précédent" disabled={running || currentV <= from} onClick={() => setPosition({ v: currentV - 1, k: 0, r: 0 })}>

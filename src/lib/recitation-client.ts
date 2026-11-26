@@ -148,6 +148,17 @@ export const player = {
       void player.play(src, { rate });
     });
   },
+  /** Position de lecture instantanée (à lire dans une boucle requestAnimationFrame). */
+  progress(): { t: number; d: number; ended: boolean; paused: boolean; src: string | null } | null {
+    if (!audio) return null;
+    return {
+      t: audio.currentTime,
+      d: Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0,
+      ended: audio.ended,
+      paused: audio.paused,
+      src: state.src,
+    };
+  },
   setRate(rate: number) {
     if (audio) audio.playbackRate = rate;
     setState({ rate });
