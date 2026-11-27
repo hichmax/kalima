@@ -197,11 +197,16 @@ async function chapterVerseAudio(reciterId: number, chapter: number): Promise<Ma
   const url = absolute(body.audio_file.audio_url, VERSE_AUDIO_BASE);
   const byVerse = new Map<number, string>();
   if (!url) return byVerse;
+  // Le minutage compte une ouverture (basmala, ou isti'ādha + basmala : ~3 s ou ~7 s) qui n'est pas
+  // dans le fichier : celui-ci commence directement au verset 1. Mesuré le 28/11/2026 sur les 114
+  // sourates (pauses de la récitation alignées sur les frontières des versets) : le décalage est
+  // égal au début annoncé du verset 1, constant d'un bout à l'autre de la sourate.
+  const offset = body.audio_file.timestamps[0]?.timestamp_from ?? 0;
   for (const t of body.audio_file.timestamps) {
     const verse = Number(t.verse_key.split(":")[1]);
-    if (Number.isInteger(verse) && t.timestamp_to > t.timestamp_from) {
-      byVerse.set(verse, `${url}#t=${(t.timestamp_from / 1000).toFixed(2)},${(t.timestamp_to / 1000).toFixed(2)}`);
-    }
+    const from = Math.max(0, t.timestamp_from - offset) / 1000;
+    const to = Math.max(0, t.timestamp_to - offset) / 1000;
+    if (Number.isInteger(verse) && to > from) byVerse.set(verse, `${url}#t=${from.toFixed(2)},${to.toFixed(2)}`);
   }
   return byVerse;
 }

@@ -32,7 +32,8 @@ const cache = new Map<string, Promise<RecitationData>>();
 export function fetchRecitation(surah: number, reciter: Reciter = "afasy"): Promise<RecitationData> {
   const key = `${surah}:${reciter}`;
   if (!cache.has(key)) {
-    const promise = fetch(`/api/recitation/${surah}${reciter === "afasy" ? "" : `?r=${reciter}`}`)
+    // « v=2 » : minutage d'ad-Dawsarī corrigé le 28/11/2026 (évite les anciennes réponses en cache)
+    const promise = fetch(`/api/recitation/${surah}${reciter === "afasy" ? "" : `?r=${reciter}&v=2`}`)
       .then((r) => r.json() as Promise<RecitationData>)
       .catch(() => ({ available: false, reason: "network" }) as RecitationData);
     // Une panne passagère ne reste pas en cache : on retentera au prochain appel.
