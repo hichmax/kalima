@@ -35,7 +35,7 @@ export function RepeatProgress({
   rangeRepeat: number;
   /** Audio du verset en cours : la position n'est lue que si c'est bien lui qui joue. */
   currentSrc: string | null;
-  /** Aller directement à un verset (clic sur la barre, un numéro, ou les flèches de fenêtre). */
+  /** Aller aux dix versets précédents ou suivants (longues plages). */
   onSeek?: (verse: number) => void;
 }) {
   const fillRef = useRef<HTMLSpanElement>(null);
@@ -140,15 +140,9 @@ export function RepeatProgress({
         transition: { type: "spring" as const, bounce: 0.18, duration: 0.6 },
       };
   const overall = position ? (position.v - from + (position.k + 1) / verseRepeat) / total : 0;
-  const seekAt = (clientX: number) => {
-    const box = trackRef.current?.getBoundingClientRect();
-    if (!box || !onSeek) return;
-    const index = Math.min(count - 1, Math.max(0, Math.floor(((clientX - box.left) / box.width) * count)));
-    onSeek(wFrom + index);
-  };
   return (
-    <div className="rp" data-seekable={onSeek ? "true" : undefined}>
-      <div className="rp-track" ref={trackRef} aria-hidden="true" onPointerDown={(event) => seekAt(event.clientX)}>
+    <div className="rp">
+      <div className="rp-track" ref={trackRef} aria-hidden="true">
         <span className="rp-fill" ref={fillRef} />
         <AnimatePresence initial={false} mode="popLayout">
           <motion.span key={page} className="rp-layer" {...slide}>
@@ -175,33 +169,34 @@ export function RepeatProgress({
         <AnimatePresence initial={false} mode="popLayout">
           <motion.span key={page} className="rp-layer" {...slide}>
             {verses.map((v, i) => (
-              <button
+              <span
                 key={v}
-                type="button"
                 className="rp-label"
                 style={{ left: `${((i + 0.5) / count) * 100}%` }}
                 data-active={position?.v === v || undefined}
-                aria-label={`Écouter à partir du verset ${v}`}
                 aria-current={position?.v === v ? "step" : undefined}
-                onClick={() => onSeek?.(v)}
               >
                 {v}
-              </button>
+              </span>
             ))}
           </motion.span>
         </AnimatePresence>
       </div>
       {pages > 1 ? (
         <div className="rp-window">
-          <button type="button" className="rp-page" aria-label="Dix versets précédents" disabled={wFrom <= from} onClick={() => onSeek?.(Math.max(from, wFrom - WINDOW))}>
-            ‹
-          </button>
+          {onSeek ? (
+            <button type="button" className="rp-page" aria-label="Dix versets précédents" disabled={wFrom <= from} onClick={() => onSeek(Math.max(from, wFrom - WINDOW))}>
+              ‹
+            </button>
+          ) : null}
           <span className="faint num">
             Versets {wFrom}–{wTo} · {total} au total
           </span>
-          <button type="button" className="rp-page" aria-label="Dix versets suivants" disabled={wTo >= to} onClick={() => onSeek?.(Math.min(to, wFrom + WINDOW))}>
-            ›
-          </button>
+          {onSeek ? (
+            <button type="button" className="rp-page" aria-label="Dix versets suivants" disabled={wTo >= to} onClick={() => onSeek(Math.min(to, wFrom + WINDOW))}>
+              ›
+            </button>
+          ) : null}
           <span className="rp-overall">
             <motion.span animate={{ width: `${Math.min(100, overall * 100)}%` }} transition={{ type: "spring", bounce: 0, duration: 0.6 }} />
           </span>

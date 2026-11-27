@@ -1,14 +1,20 @@
 "use client";
 
 import { Segmented } from "@/components/segmented";
-import { ArrowCounterClockwise, Pause, Play, Repeat, SkipBack, SkipForward } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, Pause, Play, SkipBack, SkipForward } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Phonetic, QuranText } from "@/components/quran";
 import { RepeatProgress } from "@/components/repeat-progress";
 import type { QuranWord, SurahMeta } from "@/lib/quran-types";
-import { player, unavailableMessage, usePlayer, useRecitation, useStopOnUnmount } from "@/lib/recitation-client";
+import { player, unavailableMessage, usePlayer, useRecitation, useStopOnUnmount, type Reciter } from "@/lib/recitation-client";
+import { updateState, useKalima } from "@/lib/storage";
+
+const RECITER_OPTIONS: Array<[Reciter, string]> = [
+  ["afasy", "al-ʿAfāsī"],
+  ["dossari", "ad-Dawsarī"],
+];
 
 type SurahPayload = { n: number; verses: Array<{ v: number; w: QuranWord[]; ph: string | null; phAuto?: boolean }> };
 const textCache = new Map<number, Promise<SurahPayload>>();
@@ -55,6 +61,7 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
   const [waitingWord, setWaitingWord] = useState<{ ar: string; src: string } | null>(null);
   const [speakingWord, setSpeakingWord] = useState<string | null>(null);
   const recitation = useRecitation(surah);
+  const reciter = useKalima().settings.reciter;
   const state = usePlayer();
 
   useEffect(() => {
@@ -221,6 +228,15 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
         <Choice label="Répéter la plage" values={RANGE_REPEATS.map((n) => [n, n === 0 ? "∞" : `${n}×`])} value={rangeRepeat} onChange={(v) => { stop(); setRangeRepeat(v); }} />
         <Choice label="Pause pour répéter" values={GAPS.map((g) => [g.id, g.label])} value={gap} onChange={(v) => { stop(); setGap(v); }} />
         <Choice label="Vitesse" values={[[0.75, "Lente"], [1, "Normale"], [1.25, "Rapide"]]} value={state.rate} onChange={(v) => player.setRate(v)} />
+        <Choice
+          label="Récitant"
+          values={RECITER_OPTIONS}
+          value={reciter}
+          onChange={(v) => {
+            stop();
+            updateState((s) => ({ ...s, settings: { ...s.settings, reciter: v } }));
+          }}
+        />
       </section>
 
       <motion.section className="glass float card stack listen-stage" style={{ "--gap": "12px" } as React.CSSProperties} layout transition={spring}>
@@ -263,7 +279,6 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
           ) : null}
         </AnimatePresence>
         {currentVerse?.ph ? <Phonetic text={currentVerse.ph} mode="tap" /> : null}
-        {currentVerse?.phAuto ? <p className="faint phonetic-note">Phonétique automatique : une aide à la lecture, l&apos;écoute de la récitation prime.</p> : null}
         {media.get(currentV)?.translation ? <p className="translation">{media.get(currentV)?.translation}</p> : null}
 
         <RepeatProgress
@@ -274,7 +289,6 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
           position={position}
           running={running}
           currentSrc={position ? media.get(position.v)?.audio ?? null : null}
-          onSeek={seek}
         />
 
         <div className="player-controls">
@@ -316,10 +330,11 @@ export function ListenPlayer({ surahs }: { surahs: SurahMeta[] }) {
             {unavailableMessage(recitation)}
           </p>
         ) : null}
-        <p className="faint">
-          <Repeat aria-hidden="true" /> Touche un mot pour l&apos;écouter seul : pendant l&apos;écoute, il est lu à la fin du verset en cours, puis l&apos;écoute reprend. Récitation : Mishary Rāshid al-ʿAfāsī
-          (Ḥafṣ ʿan ʿĀṣim), via Quran.Foundation · texte Tanzil.
-        </p>
+        {recitation?.credits ? (
+          <p className="faint listen-credit">
+            {recitation.credits.reciter} · {recitation.credits.provider} · texte Tanzil
+          </p>
+        ) : null}
       </motion.section>
     </div>
   );

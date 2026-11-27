@@ -28,11 +28,15 @@ function wordAudioUrl(ref: string): Promise<string | null> {
   if (!audioCache.has(ref)) {
     audioCache.set(
       ref,
-      fetch(`/api/audio-mot?ref=${encodeURIComponent(ref)}`)
+      fetch(`/api/audio-mot?ref=${encodeURIComponent(ref)}`, { signal: AbortSignal.timeout(8000) })
         .then((r) => r.json() as Promise<{ url: string | null }>)
         .then((body) => body.url)
         .catch(() => null),
     );
+    // échec (réseau, délai dépassé) : on retentera au prochain toucher
+    void audioCache.get(ref)!.then((url) => {
+      if (!url) audioCache.delete(ref);
+    });
   }
   return audioCache.get(ref)!;
 }
@@ -83,6 +87,11 @@ export function WordLibrary({ entries }: { entries: LemmaEntry[] }) {
 const LemmaCard = memo(function LemmaCard({ entry, known }: { entry: LemmaEntry; known: boolean }) {
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
 
+  /** Prépare l'adresse du son dès le contact du doigt (le son part plus vite au relâchement). */
+  const prepare = () => {
+    if (entry.firstRef) void wordAudioUrl(entry.firstRef);
+  };
+
   const listen = async () => {
     if (!entry.firstRef || status === "loading") return;
     if (status === "playing") {
@@ -97,7 +106,13 @@ const LemmaCard = memo(function LemmaCard({ entry, known }: { entry: LemmaEntry;
       return;
     }
     setStatus("playing");
-    await player.playOnce(url);
+    const result = await player.playOnce(url);
+    if (!result.ended && result.duration === 0) {
+      // lecture refusée ou fichier injoignable : on le dit au lieu de rester bloqué
+      setStatus("unavailable");
+      setTimeout(() => setStatus("idle"), 2200);
+      return;
+    }
     setStatus("idle");
   };
 
@@ -110,6 +125,7 @@ const LemmaCard = memo(function LemmaCard({ entry, known }: { entry: LemmaEntry;
           <button
             type="button"
             className="lemma-listen"
+            onPointerDown={prepare}
             onClick={() => void listen()}
             aria-label={status === "playing" ? "Arrêter" : `Écouter ce mot récité dans le Coran, ${where}`}
             aria-pressed={status === "playing"}
@@ -129,7 +145,7 @@ const LemmaCard = memo(function LemmaCard({ entry, known }: { entry: LemmaEntry;
         </p>
       ) : null}
       <p className="faint lemma-where" aria-live="polite">
-        {status === "unavailable" ? "audio indisponible ici" : status === "playing" ? `récité en ${where}` : " "}
+        {status === "unavailable" ? "audio indisponible, réessaie" : status === "playing" ? `récité en ${where}` : " "}
       </p>
       <div className="bar lemma-bar" title={`Couverture cumulée : ${entry.coverage} %`}>
         <span style={{ width: `${Math.min(100, entry.coverage)}%` }} />

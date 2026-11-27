@@ -51,7 +51,7 @@ export function AlphabetTrainer({ examples }: { examples: LetterExample[] }) {
   const quizCount = useRef(0);
   const [openedAt] = useState(() => Date.now());
   const exampleSurahs = useMemo(() => [...new Set(examples.map((e) => Number(e.ref.split(":")[0])))], [examples]);
-  const recitations = useRecitations(tab === "apprendre" || quiz?.kind === "listen" ? exampleSurahs : []);
+  const recitations = useRecitations(tab === "apprendre" || quiz?.kind === "listen" ? exampleSurahs : [], "afasy");
   const audioReady = exampleSurahs.length > 0 && exampleSurahs.every((s) => recitations[s]?.available);
 
   const wordAudio = (ref: string) => {

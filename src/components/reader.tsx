@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { SurahMeta } from "@/lib/quran-types";
+import { ReciterChoice } from "@/components/reciter-choice";
 import { player, unavailableMessage, usePlayer, useRecitation, useStopOnUnmount } from "@/lib/recitation-client";
 import type { WordPart } from "@/lib/morphology";
 
@@ -131,7 +132,8 @@ export function ReaderControls({ surah, ayas }: { surah: number; ayas: number })
         </button>
       )}
       <Segmented size="sm" label="Vitesse de récitation" value={state.rate} onChange={(rate) => player.setRate(rate)} options={[0.75, 1, 1.25].map((rate) => ({ value: rate, label: rate === 1 ? "×1" : `×${rate}` }))} />
-      <span className="faint reader-credit">Mishary al-ʿAfāsī · Ḥafṣ ʿan ʿĀṣim</span>
+      <ReciterChoice />
+      <span className="faint reader-credit">{recitation?.credits?.reciter ?? " "}</span>
     </div>
   );
 }

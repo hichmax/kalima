@@ -4,12 +4,14 @@ import { Eye } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { lexicon } from "@/content/lexicon";
 import { ExerciseRunner, type ExerciseResult } from "@/components/exercise-runner";
+import { FlashcardSession } from "@/components/flashcards";
 import { Phonetic, QuranText } from "@/components/quran";
 import { localDayKey } from "@/lib/dates";
 import { lemmaExercises, seededRandom, shuffle, type Exercise } from "@/lib/exercises";
 import type { ReviewBank } from "@/lib/learning-data";
 import { recordGrades, recordResults, scoreOf } from "@/lib/progress";
 import { dueCardIds, type Grade } from "@/lib/srs";
+import { parseDeckCard } from "@/lib/study-types";
 import { getState, updateState, useHydrated } from "@/lib/storage";
 
 let bankPromise: Promise<ReviewBank> | null = null;
@@ -44,21 +46,24 @@ function exerciseFor(card: string, bank: ReviewBank, rand: () => number): Exerci
   };
 }
 
-export type ReviewMode = { kind: "due"; limit: number } | { kind: "challenge"; size: number };
+/** `decks` : inclure les cartes des paquets de l'apprenant (page Réviser ; pas dans la séance du jour). */
+export type ReviewMode = { kind: "due"; limit: number; decks?: boolean } | { kind: "challenge"; size: number };
+
+const isDeck = (id: string) => parseDeckCard(id) !== null;
 
 export function ReviewSession({ mode, onDone }: { mode: ReviewMode; onDone?: (score: number | null) => void }) {
   const hydrated = useHydrated();
   const [bank, setBank] = useState<ReviewBank | null>(null);
   const [error, setError] = useState(false);
-  const [phase, setPhase] = useState<"quiz" | "verses" | "done">("quiz");
+  const [phase, setPhase] = useState<"quiz" | "cards" | "verses" | "done">("quiz");
   const [score, setScore] = useState<number | null>(null);
   const [seed] = useState(() => Math.random().toString(36));
   // Les cartes sont figées au lancement de la séance.
   const [cards] = useState<string[]>(() => {
     if (typeof window === "undefined") return [];
     const state = getState();
-    if (mode.kind === "due") return dueCardIds(state).slice(0, mode.limit);
-    const owned = Object.keys(state.cards).filter((id) => !id.startsWith("verse:"));
+    if (mode.kind === "due") return dueCardIds(state).filter((id) => mode.decks || !isDeck(id)).slice(0, mode.limit);
+    const owned = Object.keys(state.cards).filter((id) => !id.startsWith("verse:") && !isDeck(id));
     return shuffle(owned, seededRandom(`${localDayKey()}:${owned.length}`)).slice(0, mode.size);
   });
 
@@ -75,9 +80,14 @@ export function ReviewSession({ mode, onDone }: { mode: ReviewMode; onDone?: (sc
   const exercises = useMemo(() => {
     if (!bank) return [];
     const rand = seededRandom(seed);
-    return cards.filter((c) => !c.startsWith("verse:")).map((c) => exerciseFor(c, bank, rand)).filter((e): e is Exercise => Boolean(e));
+    return cards
+      .filter((c) => !c.startsWith("verse:") && !isDeck(c))
+      .map((c) => exerciseFor(c, bank, rand))
+      .filter((e): e is Exercise => Boolean(e));
   }, [bank, cards, seed]);
-  const verseCards = cards.filter((c) => c.startsWith("verse:"));
+  // Récitation de mémoire : seulement les versets connus de la banque (sourates du programme).
+  const verseCards = bank ? cards.filter((c) => c.startsWith("verse:") && bank.verses[c.slice("verse:".length)]) : [];
+  const deckCards = cards.filter(isDeck);
 
   if (!hydrated) return null;
   if (error) return <p className="tip tip-warn">La banque de révision n&apos;a pas pu être chargée. Vérifie ta connexion.</p>;
@@ -105,7 +115,13 @@ export function ReviewSession({ mode, onDone }: { mode: ReviewMode; onDone?: (sc
     if (mode.kind === "challenge") {
       updateState((state) => ({ ...state, challenges: { ...state.challenges, [localDayKey()]: { score: results.filter((r) => r.correctFirstTry).length, total: results.length } } }));
     }
-    if (verseCards.length) setPhase("verses");
+    nextAfterQuiz(value);
+  };
+
+  /** Après le quiz : les cartes des paquets, puis la récitation de mémoire. */
+  const nextAfterQuiz = (value: number | null) => {
+    if (deckCards.length) setPhase("cards");
+    else if (verseCards.length) setPhase("verses");
     else {
       setPhase("done");
       onDone?.(value);
@@ -115,7 +131,35 @@ export function ReviewSession({ mode, onDone }: { mode: ReviewMode; onDone?: (sc
   if (phase === "quiz" && exercises.length) {
     return <ExerciseRunner exercises={exercises} onComplete={finishQuiz} title={mode.kind === "challenge" ? "Défi express" : "Révision"} />;
   }
+  if ((phase === "quiz" && !exercises.length && deckCards.length) || phase === "cards") {
+    return (
+      <FlashcardSession
+        cards={deckCards}
+        title="Mes cartes"
+        onDone={() => {
+          if (verseCards.length) setPhase("verses");
+          else {
+            setPhase("done");
+            onDone?.(score);
+          }
+        }}
+      />
+    );
+  }
   if ((phase === "quiz" && !exercises.length) || phase === "verses") {
+    if (!verseCards.length) {
+      return (
+        <div className="glass card stack" style={{ "--gap": "8px" } as React.CSSProperties}>
+          <h3>Révision terminée</h3>
+          <p className="muted">Chaque carte reviendra au moment où tu risques de l&apos;oublier.</p>
+          {onDone ? (
+            <button type="button" className="btn primary" onClick={() => onDone(score)}>
+              Continuer
+            </button>
+          ) : null}
+        </div>
+      );
+    }
     return (
       <VerseRecall
         cards={verseCards}

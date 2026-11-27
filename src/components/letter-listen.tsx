@@ -61,7 +61,7 @@ const loadText = (n: number) => {
 export function MuqattaaListen({ char }: { char: string }) {
   const entry = muqattaat[char];
   const [s, v, w] = entry ? entry.ref.split(":").map(Number) : [0, 0, 0];
-  const recitation = useRecitation(entry ? s : null);
+  const recitation = useRecitation(entry ? s : null, "afasy");
   const [word, setWord] = useState<QuranWord | null>(null);
 
   useEffect(() => {

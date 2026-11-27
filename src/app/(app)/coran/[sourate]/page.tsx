@@ -82,7 +82,7 @@ export default async function SurahPage({ params }: { params: Promise<{ sourate:
         <p>{tanzilNotice}</p>
         <p>
           Traduction des sens : Muhammad Hamidullah (révision du Complexe du Roi Fahd). Une traduction est une
-          interprétation humaine, pas le Coran. Récitation : Mishary Rāshid al-ʿAfāsī. Traduction et audio fournis par
+          interprétation humaine, pas le Coran. Récitation au choix : Mishary Rāshid al-ʿAfāsī ou Yāsir ad-Dawsarī. Traduction et audio fournis par
           Quran.Foundation.
         </p>
       </footer>

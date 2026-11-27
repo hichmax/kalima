@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { Phonetic, PlayButton, QuranText } from "@/components/quran";
 import type { StudyVerse } from "@/lib/learning-data";
 import { recordGrades } from "@/lib/progress";
+import { ReciterChoice } from "@/components/reciter-choice";
 import { player, unavailableMessage, usePlayer, useRecitations, useStopOnUnmount } from "@/lib/recitation-client";
 import type { Grade } from "@/lib/srs";
 
@@ -229,9 +230,12 @@ export function MemorizeStep({
       >
         <Repeat aria-hidden="true" /> Répéter ces versets en boucle dans le lecteur
       </Link>
-      <p className="faint">
-        Récitation : Mishary Rāshid al-ʿAfāsī (Ḥafṣ ʿan ʿĀṣim), via Quran.Foundation. Texte : Tanzil.
-      </p>
+      <div className="row between memorize-reciter">
+        <ReciterChoice />
+        <p className="faint">
+          {first?.credits ? `${first.credits.reciter}, via ${first.credits.provider}. Texte : Tanzil.` : "Texte : Tanzil."}
+        </p>
+      </div>
     </section>
   );
 }

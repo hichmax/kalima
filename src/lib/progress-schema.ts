@@ -6,10 +6,22 @@ import { z } from "zod";
  */
 
 export const storedCardSchema = z.object({
-  kind: z.enum(["letter", "sign", "rule", "lemma", "verse", "concept"]),
+  kind: z.enum(["letter", "sign", "rule", "lemma", "verse", "concept", "word", "reading"]),
   addedAt: z.string(),
   fsrs: z.record(z.string(), z.unknown()),
   lastGrade: z.number().int().min(1).max(4).optional(),
+});
+
+export const deckSchema = z.object({
+  id: z.string(),
+  s: z.number().int().min(1).max(114),
+  from: z.number().int().min(1),
+  to: z.number().int().min(1),
+  createdAt: z.string(),
+  /** identifiants des cartes : word:s:v:w (mot) et reading:s:v (lire le verset) */
+  cards: z.array(z.string()).max(2000),
+  /** suppression (conservée pour que la synchronisation ne fasse pas revenir le paquet) */
+  removedAt: z.string().optional(),
 });
 
 export const dayProgressSchema = z.object({
@@ -31,8 +43,10 @@ export const stateSchema = z.object({
       onboarded: z.boolean().default(false),
       /** couleurs du tajwīd sur le texte coranique (mushaf coloré) */
       tajweed: z.boolean().default(true),
+      /** récitant des versets : Mishary al-ʿAfāsī (verset par verset) ou Yāsir ad-Dawsarī */
+      reciter: z.enum(["afasy", "dossari"]).default("afasy"),
     })
-    .default({ phonetic: "auto", arabicScale: 1, theme: "nuit", track: "debutant", onboarded: false, tajweed: true }),
+    .default({ phonetic: "auto", arabicScale: 1, theme: "nuit", track: "debutant", onboarded: false, tajweed: true, reciter: "afasy" }),
   days: z.record(z.string(), dayProgressSchema).default({}),
   cards: z.record(z.string(), storedCardSchema).default({}),
   activity: z
@@ -40,11 +54,14 @@ export const stateSchema = z.object({
     .default({}),
   challenges: z.record(z.string(), z.object({ score: z.number(), total: z.number() })).default({}),
   recordings: z.record(z.string(), z.string()).default({}),
+  /** Paquets de cartes créés par l'apprenant à partir de versets choisis (flashcards, quiz). */
+  decks: z.record(z.string(), deckSchema).default({}),
 });
 
 export type KalimaState = z.infer<typeof stateSchema>;
 export type StoredCard = z.infer<typeof storedCardSchema>;
 export type Settings = KalimaState["settings"];
+export type Deck = z.infer<typeof deckSchema>;
 
 export function emptyState(now = new Date()): KalimaState {
   const iso = now.toISOString();
@@ -63,6 +80,17 @@ const time = (value: unknown) => {
  * - activité : maximum par jour (une même séance n'est jamais comptée deux fois) ;
  * - défis : meilleur score du jour ; réglages : ceux du document le plus récent.
  */
+/** Paquets : union ; pour un même paquet, la version la plus récente (création ou suppression). */
+function mergeDecks(a: KalimaState["decks"], b: KalimaState["decks"]): KalimaState["decks"] {
+  const stamp = (deck: Deck) => Math.max(time(deck.createdAt), time(deck.removedAt));
+  const decks = { ...a };
+  for (const [id, deck] of Object.entries(b)) {
+    const mine = decks[id];
+    if (!mine || stamp(deck) > stamp(mine)) decks[id] = deck;
+  }
+  return decks;
+}
+
 export function mergeStates(a: KalimaState, b: KalimaState): KalimaState {
   const newer = time(a.updatedAt) >= time(b.updatedAt) ? a : b;
 
@@ -119,5 +147,6 @@ export function mergeStates(a: KalimaState, b: KalimaState): KalimaState {
     activity,
     challenges,
     recordings: { ...b.recordings, ...a.recordings },
+    decks: mergeDecks(a.decks, b.decks),
   };
 }

@@ -15,7 +15,7 @@ import { emptyState, stateSchema, type KalimaState } from "@/lib/progress-schema
 
 export const STORAGE_KEY = "kalima:v2";
 
-export { emptyState, stateSchema, type KalimaState, type Settings, type StoredCard } from "@/lib/progress-schema";
+export { emptyState, stateSchema, type Deck, type KalimaState, type Settings, type StoredCard } from "@/lib/progress-schema";
 
 function safeRead(): string | null {
   try {

@@ -4183,41 +4183,8 @@ html[data-theme="papier"] .ambient-veil {
   font-size: 0.82rem;
 }
 
-/* Barre d'écoute cliquable : on saute où l'on veut */
-.rp[data-seekable] .rp-track {
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.rp[data-seekable] .rp-track::before {
-  content: "";
-  position: absolute;
-  inset: -16px 0;
-}
-
 .rp-labels {
   height: 30px;
-}
-
-button.rp-label {
-  min-width: 30px;
-  min-height: 30px;
-  padding: 0 4px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  font: inherit;
-  font-size: 0.78rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-3);
-  cursor: pointer;
-  transition: color 160ms ease, background-color 160ms ease;
-}
-
-button.rp-label:hover,
-button.rp-label[data-active] {
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .rp-page {
@@ -4308,4 +4275,150 @@ html:not([data-tajweed="off"]) .tj-silent { color: var(--tj-silent); }
 
 .privacy-list strong {
   color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- cartes (flashcards) et paquets */
+.fc-card {
+  text-align: center;
+  justify-items: center;
+  min-height: 300px;
+  perspective: 900px;
+}
+
+.fc-card > .chip {
+  justify-self: center;
+}
+
+.fc-card .quran {
+  margin: 0;
+  width: 100%;
+}
+
+.fc-word.quran {
+  font-size: clamp(2.6rem, 11vw, 4.2rem);
+  line-height: 1.7;
+}
+
+.fc-context.quran,
+.fc-verse.quran {
+  font-size: calc(var(--quran-size) * 0.92);
+}
+
+.fc-ask {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.fc-hints {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fc-hints .btn[aria-pressed="true"] {
+  border-color: var(--violet);
+  background: color-mix(in srgb, var(--violet) 22%, transparent);
+}
+
+.fc-ph {
+  margin: 0;
+}
+
+.fc-back {
+  justify-items: center;
+}
+
+.fc-meaning {
+  margin: 0;
+  font-size: clamp(1.2rem, 4.6vw, 1.5rem);
+  font-weight: 650;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.fc-translation {
+  margin: 0;
+  max-width: 52ch;
+}
+
+.fc-card > .grade-row,
+.fc-card > .btn.block {
+  width: 100%;
+}
+
+.fc-card .ar {
+  font-family: var(--font-quran);
+}
+
+.deck-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-row strong {
+  font-size: 1.02rem;
+}
+
+.deck-bar {
+  height: 6px;
+}
+
+.deck-actions {
+  --gap: 8px;
+  flex-wrap: wrap;
+}
+
+.deck-actions .icon-text {
+  margin-left: auto;
+}
+
+.deck-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.deck-link > svg {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  color: var(--violet-2, var(--violet));
+}
+
+.deck-link:hover {
+  border-color: color-mix(in srgb, var(--violet) 55%, transparent);
+}
+
+.listen-credit {
+  margin: 0;
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+.memorize-reciter {
+  --gap: 10px;
+  flex-wrap: wrap;
+}
+
+.memorize-reciter p {
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .fc-card .grade-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.fc-back .ar {
+  font-size: 1.35em;
+  line-height: 1.4;
+  color: var(--sand);
 }

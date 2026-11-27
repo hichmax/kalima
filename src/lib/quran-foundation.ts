@@ -2,8 +2,9 @@ import "server-only";
 import { z } from "zod";
 
 /**
- * Quran.Foundation Content API v4 — traduction des sens (Hamidullah, ressource 31) et
- * récitation (Mishary al-ʿAfāsī, ressource 7).
+ * Quran.Foundation Content API v4 — traduction des sens (Hamidullah, ressource 31), traduction
+ * française mot à mot, et récitation : Mishary al-ʿAfāsī (ressource 7, un fichier par verset) ou
+ * Yāsir ad-Dawsarī (récitant de sourate 174 : un fichier par sourate + minutage de chaque verset).
  *
  * Conditions (Developer Terms, mise à jour du 20/11/2026) :
  *   - contenu affiché uniquement dans l'application, jamais redistribué comme données ;
@@ -124,6 +125,7 @@ const wordSchema = z.object({
   position: z.number(),
   char_type_name: z.string(),
   audio_url: z.string().nullable().optional(),
+  translation: z.object({ text: z.string().nullable().optional() }).nullable().optional(),
 });
 
 const verseSchema = z.object({
@@ -155,15 +157,56 @@ const plain = (html: string) =>
     .replace(/\s+/gu, " ")
     .trim();
 
+/** Sens mot à mot sans la ponctuation de la phrase (« guillemets », virgule ou point final). */
+function cleanGloss(text: string | null | undefined): string | null {
+  const clean = (text ?? "")
+    .replace(/[«»“”"]/gu, "")
+    .replace(/[\s,.;:!?]+$/u, "")
+    .replace(/\s+/gu, " ")
+    .trim();
+  return clean || null;
+}
+
 export interface VerseMedia {
   v: number;
   translation: string | null;
   audio: string | null;
   /** Audio de chaque mot (ordre des mots), null si indisponible. */
   words: Array<string | null>;
+  /** Traduction française mot à mot (Quran.Foundation), null si indisponible. */
+  wordsFr: Array<string | null>;
 }
 
-export async function getChapterMedia(chapter: number): Promise<VerseMedia[]> {
+export type Reciter = "afasy" | "dossari";
+/** Yāsir ad-Dawsarī : récitant « de sourate » chez Quran.Foundation (pas de fichier par verset). */
+const DOSSARI_CHAPTER_RECITER = 174;
+
+const chapterAudioSchema = z.object({
+  audio_file: z.object({
+    audio_url: z.string(),
+    timestamps: z.array(z.object({ verse_key: z.string(), timestamp_from: z.number(), timestamp_to: z.number() })).default([]),
+  }),
+});
+
+/**
+ * Audio de chaque verset dans le fichier de la sourate, sous forme d'URL à fragment temporel
+ * (« …/18.mp3#t=7.21,16.9 ») : le lecteur de Kalima lit exactement ce passage.
+ */
+async function chapterVerseAudio(reciterId: number, chapter: number): Promise<Map<number, string>> {
+  const body = chapterAudioSchema.parse(await qfFetch(`/content/api/v4/chapter_recitations/${reciterId}/${chapter}?segments=true`));
+  const url = absolute(body.audio_file.audio_url, VERSE_AUDIO_BASE);
+  const byVerse = new Map<number, string>();
+  if (!url) return byVerse;
+  for (const t of body.audio_file.timestamps) {
+    const verse = Number(t.verse_key.split(":")[1]);
+    if (Number.isInteger(verse) && t.timestamp_to > t.timestamp_from) {
+      byVerse.set(verse, `${url}#t=${(t.timestamp_from / 1000).toFixed(2)},${(t.timestamp_to / 1000).toFixed(2)}`);
+    }
+  }
+  return byVerse;
+}
+
+export async function getChapterMedia(chapter: number, reciter: Reciter = "afasy"): Promise<VerseMedia[]> {
   if (!Number.isInteger(chapter) || chapter < 1 || chapter > 114) throw new Error("Sourate invalide");
   const config = getConfig();
   if (!config) throw new Error("Quran.Foundation non configuré");
@@ -172,13 +215,17 @@ export async function getChapterMedia(chapter: number): Promise<VerseMedia[]> {
       language: "fr",
       words: "true",
       translations: String(config.translationId),
-      audio: String(config.recitationId),
+      ...(reciter === "afasy" ? { audio: String(config.recitationId) } : {}),
       word_fields: "audio_url",
+      word_translation_language: "fr",
       per_page: "50",
       page: String(page),
     }).toString();
 
-  const first = pageSchema.parse(await qfFetch(`/content/api/v4/verses/by_chapter/${chapter}?${query(1)}`));
+  const [first, dossari] = await Promise.all([
+    qfFetch(`/content/api/v4/verses/by_chapter/${chapter}?${query(1)}`).then((body) => pageSchema.parse(body)),
+    reciter === "dossari" ? chapterVerseAudio(DOSSARI_CHAPTER_RECITER, chapter) : Promise.resolve(null),
+  ]);
   const rest = await Promise.all(
     Array.from({ length: Math.max(0, first.pagination.total_pages - 1) }, async (_, i) =>
       pageSchema.parse(await qfFetch(`/content/api/v4/verses/by_chapter/${chapter}?${query(i + 2)}`)),
@@ -189,8 +236,9 @@ export async function getChapterMedia(chapter: number): Promise<VerseMedia[]> {
     .map((verse) => ({
       v: verse.verse_number,
       translation: verse.translations[0] ? plain(verse.translations[0].text) : null,
-      audio: absolute(verse.audio?.url, VERSE_AUDIO_BASE),
+      audio: dossari ? (dossari.get(verse.verse_number) ?? null) : absolute(verse.audio?.url, VERSE_AUDIO_BASE),
       words: verse.words.filter((w) => w.char_type_name === "word").map((w) => absolute(w.audio_url, WORD_AUDIO_BASE)),
+      wordsFr: verse.words.filter((w) => w.char_type_name === "word").map((w) => cleanGloss(w.translation?.text)),
     }));
 }
 

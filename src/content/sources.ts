@@ -50,8 +50,8 @@ export const sources: SourceRef[] = [
   {
     id: "alafasy",
     kind: "audio",
-    label: "Mishary Rāshid al-ʿAfāsī — récitation (Ḥafṣ ʿan ʿĀṣim)",
-    detail: "Audio des versets et des mots, via Quran.Foundation (ressource 7).",
+    label: "Mishary Rāshid al-ʿAfāsī et Yāsir ad-Dawsarī — récitation (Ḥafṣ ʿan ʿĀṣim)",
+    detail: "Audio des versets via Quran.Foundation : al-ʿAfāsī verset par verset (ressource 7), ad-Dawsarī par sourate avec le minutage de chaque verset (récitant 174, vérifié le 27/11/2026). Audio des mots : récitation mot à mot de Quran.Foundation.",
     license: "Quran.Foundation Developer Terms — crédit du récitant",
     verified: true,
   },

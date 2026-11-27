@@ -151,7 +151,7 @@ export default async function Home() {
                 <li><strong>Texte</strong> Tanzil, Uthmani 1.1</li>
                 <li><strong>Mots</strong> Quranic Arabic Corpus</li>
                 <li><strong>Traduction des sens</strong> M. Hamidullah</li>
-                <li><strong>Récitation</strong> M. R. al-ʿAfāsī</li>
+                <li><strong>Récitation</strong> al-ʿAfāsī ou ad-Dawsarī</li>
                 <li><strong>Tajwīd</strong> Tuḥfat al-Aṭfāl, al-Jazariyya</li>
               </ul>
             </div>
